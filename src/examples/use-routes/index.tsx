@@ -1,4 +1,3 @@
-import * as React from "react";
 import type { RouteObject } from "react-router-dom";
 import { Outlet, Link, useRoutes, useParams } from "react-router-dom";
 
@@ -10,11 +9,11 @@ export default function App() {
       children: [
         { index: true, element: <Home /> },
         {
-          path: "/courses",
+          path: "courses",
           element: <Courses />,
           children: [
             { index: true, element: <CoursesIndex /> },
-            { path: "/courses/:id", element: <Course /> }
+            { path: ":id", element: <Course /> }
           ]
         },
         { path: "*", element: <NoMatch /> }
@@ -41,13 +40,13 @@ function Layout() {
       <nav>
         <ul>
           <li>
-            <Link to="/">Home</Link>
+            <Link to="/use-routes">Home</Link>
           </li>
           <li>
-            <Link to="/courses">Courses</Link>
+            <Link to="courses">Courses</Link>
           </li>
           <li>
-            <Link to="/nothing-here">Nothing Here</Link>
+            <Link to="nothing-here">Nothing Here</Link>
           </li>
         </ul>
       </nav>
@@ -109,7 +108,7 @@ function Course() {
 
       <p>This is a great course. You're gonna love it!</p>
 
-      <Link to="/courses">See all courses</Link>
+      <Link to="/use-routes/courses">See all courses</Link>
     </div>
   );
 }
@@ -123,7 +122,7 @@ function NoMatch() {
     <div>
       <h2>It looks like you're lost...</h2>
       <p>
-        <Link to="/">Go to the home page</Link>
+        <Link to="/use-routes">Go to the home page</Link>
       </p>
     </div>
   );

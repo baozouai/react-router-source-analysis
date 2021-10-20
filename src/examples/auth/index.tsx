@@ -6,7 +6,7 @@ import {
   useNavigate,
   useLocation,
   Navigate,
-  Outlet
+  Outlet,
 } from "react-router-dom";
 import { fakeAuthProvider } from "./auth";
 
@@ -28,10 +28,11 @@ export default function App() {
     <AuthProvider>
       <Routes>
         <Route element={<Layout />}>
-          <Route path="/" element={<PublicPage />} />
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="" element={<PublicPage />} />
+          <Route path="login" element={<LoginPage />} />
           <Route
-            path="/protected"
+            path="protected"
+            caseSensitive
             element={
               <RequireAuth>
                 <ProtectedPage />
@@ -51,10 +52,10 @@ function Layout() {
 
       <ul>
         <li>
-          <Link to="/">Public Page</Link>
+          <Link to=".">Public Page</Link>
         </li>
         <li>
-          <Link to="/protected">Protected Page</Link>
+          <Link to="protected">Protected Page</Link>
         </li>
       </ul>
 
@@ -73,7 +74,6 @@ let AuthContext = React.createContext<AuthContextType>(null!);
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
   let [user, setUser] = React.useState<any>(null);
-
   let signin = (newUser: string, callback: VoidFunction) => {
     return fakeAuthProvider.signin(() => {
       setUser(newUser);
@@ -128,7 +128,7 @@ function RequireAuth({ children }: { children: JSX.Element }) {
     // trying to go to when they were redirected. This allows us to send them
     // along to that page after they login, which is a nicer user experience
     // than dropping them off on the home page.
-    return <Navigate to="/login" state={{ from: location }} />;
+    return <Navigate to="/auth/login" state={{ from: location }} />;
   }
 
   return children;
