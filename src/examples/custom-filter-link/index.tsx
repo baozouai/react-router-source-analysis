@@ -20,7 +20,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<SneakerGrid />} />
-          <Route path="/sneakers/:id" element={<SneakerView />} />
+          <Route path="sneakers/:id" element={<SneakerView />} />
           <Route path="*" element={<NoMatch />} />
         </Route>
       </Routes>
@@ -35,7 +35,7 @@ function Layout() {
         <h3>Filter by brand</h3>
         <ul>
           <li>
-            <Link to="/">All</Link>
+            <Link to="">All</Link>
           </li>
           {brands.map(brand => (
             <li key={brand}>
@@ -90,7 +90,7 @@ function SneakerGrid() {
               />
               <Link
                 style={{ position: "absolute", inset: 0 }}
-                to={`/sneakers/${snkr.id}`}
+                to={`sneakers/${snkr.id}`}
               >
                 <VisuallyHidden>{name}</VisuallyHidden>
               </Link>
@@ -115,7 +115,7 @@ const BrandLink: React.FC<BrandLinkProps> = ({ brand, children, ...props }) => {
 
   return (
     <Link
-      to={`/?brand=${brand}`}
+      to={`./?brand=${brand}`}
       {...props}
       style={{
         ...props.style,
@@ -165,7 +165,7 @@ function NoMatch() {
     <div>
       <h2>Nothing to see here!</h2>
       <p>
-        <Link to="/">Go to the home page</Link>
+        <Link to=".">Go to the home page</Link>
       </p>
     </div>
   );

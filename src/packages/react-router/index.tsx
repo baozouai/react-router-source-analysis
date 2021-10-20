@@ -643,7 +643,6 @@ export function createRoutesFromChildren(
 
     routes.push(route);
   });
-
   return routes;
 }
 

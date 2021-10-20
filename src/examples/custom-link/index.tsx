@@ -29,10 +29,10 @@ function Layout() {
       <nav>
         <ul>
           <li>
-            <CustomLink to="/">Home</CustomLink>
+            <CustomLink to="/customer-link">Home</CustomLink>
           </li>
           <li>
-            <CustomLink to="/about">About</CustomLink>
+            <CustomLink to="about">About</CustomLink>
           </li>
         </ul>
       </nav>
