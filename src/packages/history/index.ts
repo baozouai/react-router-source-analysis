@@ -357,12 +357,13 @@ export type BrowserHistoryOptions = { window?: Window };
 export function createBrowserHistory(
   options: BrowserHistoryOptions = {}
 ): BrowserHistory {
-  let { window = document.defaultView! } = options;
-  let globalHistory = window.history;
-
+  // 默认值是document.defaultView，即浏览器的window
+  const { window = document.defaultView! } = options;
+  const globalHistory = window.history;
+  /** 获取索引和当前location */
   function getIndexAndLocation(): [number, Location] {
-    let { pathname, search, hash } = window.location;
-    let state = globalHistory.state || {};
+    const { pathname, search, hash } = window.location;
+    const state = globalHistory.state || {};
     return [
       state.idx,
       readOnly<Location>({
@@ -374,19 +375,25 @@ export function createBrowserHistory(
       })
     ];
   }
-
+  /** 用于存储下面的 blockers.call方法的参数，有 { action,location,retry }  */
   let blockedPopTx: Transition | null = null;
+  /** popstate的回调 */
   function handlePop() {
     if (blockedPopTx) {
+      // 如果参数有值，那么将参数传给blockers中的handlers
       blockers.call(blockedPopTx);
+      // 然后参数置空
       blockedPopTx = null;
     } else {
-      let nextAction = Action.Pop;
-      let [nextIndex, nextLocation] = getIndexAndLocation();
+      // 为空的话，给blockPopTx赋值
+      // 因为是popstate，那么这里的nextAction就是pop了
+      const nextAction = Action.Pop;
+      const [nextIndex, nextLocation] = getIndexAndLocation();
 
       if (blockers.length) {
         if (nextIndex != null) {
-          let delta = index - nextIndex;
+          // 这里的index是上一次的getIndexAndLocation得到了，下面有
+          const delta = index - nextIndex;
           if (delta) {
             // Revert the POP
             blockedPopTx = {
@@ -415,27 +422,42 @@ export function createBrowserHistory(
           );
         }
       } else {
+        // blockers为空，那么赋值新的action，然后获取新的index和location，然后
+        // 将action, location作为参数消费listeners
         applyTx(nextAction);
       }
     }
   }
-
+  /**
+   * 监听popstate
+   * 调用history.pushState()或history.replaceState()不会触发popstate事件。
+   * 只有在做出浏览器动作时，才会触发该事件，如用户点击浏览器的回退按钮、在Javascript代码中调用history.back()
+   * 、history.forward()方法
+   * 
+   * ref: https://developer.mozilla.org/zh-CN/docs/Web/API/Window/popstate_event
+   */
   window.addEventListener(PopStateEventType, handlePop);
 
   let action = Action.Pop;
   let [index, location] = getIndexAndLocation();
-  let listeners = createEvents<Listener>();
-  let blockers = createEvents<Blocker>();
+  const listeners = createEvents<Listener>();
+  const blockers = createEvents<Blocker>();
 
   if (index == null) {
+    // 初始index为空，那么给个0
     index = 0;
+    // 这里replaceState后，history.state.idx就为0了
     globalHistory.replaceState({ ...globalHistory.state, idx: index }, '');
   }
-
+  /** 返回一个新的href */
   function createHref(to: To) {
     return typeof to === 'string' ? to : createPath(to);
   }
-
+  /**
+   * @description 获取新的Location
+   * @param to 新的path
+   * @param state 状态
+   */
   function getNextLocation(to: To, state: State = null): Location {
     return readOnly<Location>({
       ...location,
@@ -444,7 +466,7 @@ export function createBrowserHistory(
       key: createKey()
     });
   }
-
+  /** 获取state和url */
   function getHistoryStateAndUrl(
     nextLocation: Location,
     index: number
@@ -458,31 +480,38 @@ export function createBrowserHistory(
       createHref(nextLocation)
     ];
   }
-
-  function allowTx(action: Action, location: Location, retry: () => void) {
+  /** 
+   * @description 判断是否允许路由切换
+   * 
+   * - blockers有handlers，那么消费handlers，然后返回false
+   * - blockers没有handlers，返回true
+   *  */
+  function allowTx(action: Action, location: Location, retry: () => void): boolean {
     return (
       !blockers.length || (blockers.call({ action, location, retry }), false)
     );
   }
-
+  /** 执行所有的listener */
   function applyTx(nextAction: Action) {
     action = nextAction;
+  //  获取新的index和location
     [index, location] = getIndexAndLocation();
     listeners.call({ action, location });
   }
-
+  /** history.push,跳到哪个页面 */
   function push(to: To, state?: State) {
-    let nextAction = Action.Push;
-    let nextLocation = getNextLocation(to, state);
+    const nextAction = Action.Push;
+    const nextLocation = getNextLocation(to, state);
     function retry() {
       push(to, state);
     }
 
     if (allowTx(nextAction, nextLocation, retry)) {
-      let [historyState, url] = getHistoryStateAndUrl(nextLocation, index + 1);
+      const [historyState, url] = getHistoryStateAndUrl(nextLocation, index + 1);
 
       // TODO: Support forced reloading
       // try...catch because iOS limits us to 100 pushState calls :/
+      // 用try  catch的原因是因为ios限制了100次pushState的调用
       try {
         globalHistory.pushState(historyState, '', url);
       } catch (error) {
@@ -496,14 +525,14 @@ export function createBrowserHistory(
   }
 
   function replace(to: To, state?: State) {
-    let nextAction = Action.Replace;
-    let nextLocation = getNextLocation(to, state);
+    const nextAction = Action.Replace;
+    const nextLocation = getNextLocation(to, state);
     function retry() {
       replace(to, state);
     }
 
     if (allowTx(nextAction, nextLocation, retry)) {
-      let [historyState, url] = getHistoryStateAndUrl(nextLocation, index);
+      const [historyState, url] = getHistoryStateAndUrl(nextLocation, index);
 
       // TODO: Support forced reloading
       globalHistory.replaceState(historyState, '', url);
@@ -511,12 +540,12 @@ export function createBrowserHistory(
       applyTx(nextAction);
     }
   }
-
+  /** eg: go(-1)，返回上一个路由，go(1),进入下一个路由 */
   function go(delta: number) {
     globalHistory.go(delta);
   }
-
-  let history: BrowserHistory = {
+  // 这里创建一个新的history
+  const history: BrowserHistory = {
     get action() {
       return action;
     },
@@ -537,15 +566,17 @@ export function createBrowserHistory(
       return listeners.push(listener);
     },
     block(blocker) {
-      let unblock = blockers.push(blocker);
+      // push后返回unblock，即把该blocker从blockers去掉
+      const unblock = blockers.push(blocker);
 
       if (blockers.length === 1) {
+        // beforeunload
         window.addEventListener(BeforeUnloadEventType, promptBeforeUnload);
       }
 
       return function() {
         unblock();
-
+        // 一出去beforeunload事件监听器一遍document在pagehide事件中仍可以使用
         // Remove the beforeunload listener so the document may
         // still be salvageable in the pagehide event.
         // See https://html.spec.whatwg.org/#unloading-documents
@@ -576,14 +607,14 @@ export type HashHistoryOptions = { window?: Window };
 export function createHashHistory(
   options: HashHistoryOptions = {}
 ): HashHistory {
-  let { window = document.defaultView! } = options;
-  let globalHistory = window.history;
+  const { window = document.defaultView! } = options;
+  const globalHistory = window.history;
 
   function getIndexAndLocation(): [number, Location] {
-    let { pathname = '/', search = '', hash = '' } = parsePath(
+    const { pathname = '/', search = '', hash = '' } = parsePath(
       window.location.hash.substr(1)
     );
-    let state = globalHistory.state || {};
+    const state = globalHistory.state || {};
     return [
       state.idx,
       readOnly<Location>({
@@ -602,12 +633,12 @@ export function createHashHistory(
       blockers.call(blockedPopTx);
       blockedPopTx = null;
     } else {
-      let nextAction = Action.Pop;
-      let [nextIndex, nextLocation] = getIndexAndLocation();
+      const nextAction = Action.Pop;
+      const [nextIndex, nextLocation] = getIndexAndLocation();
 
       if (blockers.length) {
         if (nextIndex != null) {
-          let delta = index - nextIndex;
+          const delta = index - nextIndex;
           if (delta) {
             // Revert the POP
             blockedPopTx = {
@@ -646,7 +677,7 @@ export function createHashHistory(
   // popstate does not fire on hashchange in IE 11 and old (trident) Edge
   // https://developer.mozilla.org/de/docs/Web/API/Window/popstate_event
   window.addEventListener(HashChangeEventType, () => {
-    let [, nextLocation] = getIndexAndLocation();
+    const [, nextLocation] = getIndexAndLocation();
 
     // Ignore extraneous hashchange events.
     if (createPath(nextLocation) !== createPath(location)) {
@@ -656,8 +687,8 @@ export function createHashHistory(
 
   let action = Action.Pop;
   let [index, location] = getIndexAndLocation();
-  let listeners = createEvents<Listener>();
-  let blockers = createEvents<Blocker>();
+  const listeners = createEvents<Listener>();
+  const blockers = createEvents<Blocker>();
 
   if (index == null) {
     index = 0;
@@ -665,12 +696,13 @@ export function createHashHistory(
   }
 
   function getBaseHref() {
-    let base = document.querySelector('base');
+    const base = document.querySelector('base');
     let href = '';
 
     if (base && base.getAttribute('href')) {
-      let url = window.location.href;
-      let hashIndex = url.indexOf('#');
+      const url = window.location.href;
+      const hashIndex = url.indexOf('#');
+      // 有hash的话去掉#及其之后的
       href = hashIndex === -1 ? url : url.slice(0, hashIndex);
     }
 
@@ -717,8 +749,8 @@ export function createHashHistory(
   }
 
   function push(to: To, state?: State) {
-    let nextAction = Action.Push;
-    let nextLocation = getNextLocation(to, state);
+    const nextAction = Action.Push;
+    const nextLocation = getNextLocation(to, state);
     function retry() {
       push(to, state);
     }
@@ -731,7 +763,7 @@ export function createHashHistory(
     );
 
     if (allowTx(nextAction, nextLocation, retry)) {
-      let [historyState, url] = getHistoryStateAndUrl(nextLocation, index + 1);
+      const [historyState, url] = getHistoryStateAndUrl(nextLocation, index + 1);
 
       // TODO: Support forced reloading
       // try...catch because iOS limits us to 100 pushState calls :/
@@ -748,8 +780,8 @@ export function createHashHistory(
   }
 
   function replace(to: To, state?: State) {
-    let nextAction = Action.Replace;
-    let nextLocation = getNextLocation(to, state);
+    const nextAction = Action.Replace;
+    const nextLocation = getNextLocation(to, state);
     function retry() {
       replace(to, state);
     }
@@ -762,7 +794,7 @@ export function createHashHistory(
     );
 
     if (allowTx(nextAction, nextLocation, retry)) {
-      let [historyState, url] = getHistoryStateAndUrl(nextLocation, index);
+      const [historyState, url] = getHistoryStateAndUrl(nextLocation, index);
 
       // TODO: Support forced reloading
       globalHistory.replaceState(historyState, '', url);
@@ -775,7 +807,7 @@ export function createHashHistory(
     globalHistory.go(delta);
   }
 
-  let history: HashHistory = {
+  const history: HashHistory = {
     get action() {
       return action;
     },
@@ -796,7 +828,7 @@ export function createHashHistory(
       return listeners.push(listener);
     },
     block(blocker) {
-      let unblock = blockers.push(blocker);
+      const unblock = blockers.push(blocker);
 
       if (blockers.length === 1) {
         window.addEventListener(BeforeUnloadEventType, promptBeforeUnload);
@@ -842,9 +874,9 @@ export type MemoryHistoryOptions = {
 export function createMemoryHistory(
   options: MemoryHistoryOptions = {}
 ): MemoryHistory {
-  let { initialEntries = ['/'], initialIndex } = options;
-  let entries: Location[] = initialEntries.map(entry => {
-    let location = readOnly<Location>({
+  const { initialEntries = ['/'], initialIndex } = options;
+  const entries: Location[] = initialEntries.map(entry => {
+    const location = readOnly<Location>({
       pathname: '/',
       search: '',
       hash: '',
@@ -870,8 +902,8 @@ export function createMemoryHistory(
 
   let action = Action.Pop;
   let location = entries[index];
-  let listeners = createEvents<Listener>();
-  let blockers = createEvents<Blocker>();
+  const listeners = createEvents<Listener>();
+  const blockers = createEvents<Blocker>();
 
   function createHref(to: To) {
     return typeof to === 'string' ? to : createPath(to);
@@ -899,8 +931,8 @@ export function createMemoryHistory(
   }
 
   function push(to: To, state?: State) {
-    let nextAction = Action.Push;
-    let nextLocation = getNextLocation(to, state);
+    const nextAction = Action.Push;
+    const nextLocation = getNextLocation(to, state);
     function retry() {
       push(to, state);
     }
@@ -920,8 +952,8 @@ export function createMemoryHistory(
   }
 
   function replace(to: To, state?: State) {
-    let nextAction = Action.Replace;
-    let nextLocation = getNextLocation(to, state);
+    const nextAction = Action.Replace;
+    const nextLocation = getNextLocation(to, state);
     function retry() {
       replace(to, state);
     }
@@ -940,9 +972,9 @@ export function createMemoryHistory(
   }
 
   function go(delta: number) {
-    let nextIndex = clamp(index + delta, 0, entries.length - 1);
-    let nextAction = Action.Pop;
-    let nextLocation = entries[nextIndex];
+    const nextIndex = clamp(index + delta, 0, entries.length - 1);
+    const nextAction = Action.Pop;
+    const nextLocation = entries[nextIndex];
     function retry() {
       go(delta);
     }
@@ -953,7 +985,7 @@ export function createMemoryHistory(
     }
   }
 
-  let history: MemoryHistory = {
+  const history: MemoryHistory = {
     get index() {
       return index;
     },
@@ -991,7 +1023,7 @@ export function createMemoryHistory(
 function clamp(n: number, lowerBound: number, upperBound: number) {
   return Math.min(Math.max(n, lowerBound), upperBound);
 }
-
+/** 阻止beforeunload默认行为 */
 function promptBeforeUnload(event: BeforeUnloadEvent) {
   // Cancel the event.
   event.preventDefault();
@@ -1013,17 +1045,19 @@ function createEvents<F extends Function>(): Events<F> {
       return handlers.length;
     },
     push(fn: F) {
+      // 其实就是一个观察者模式，push后返回unsubscribe
       handlers.push(fn);
       return function() {
         handlers = handlers.filter(handler => handler !== fn);
       };
     },
     call(arg) {
+      // 消费所有handle
       handlers.forEach(fn => fn && fn(arg));
     }
   };
 }
-
+/** `Math.random().toString(36)`返回类似 `0.txwl3yylcrc`，那么substr就是类似 `txwl3yyl`(createKey的结果) */
 function createKey() {
   return Math.random()
     .toString(36)
@@ -1032,7 +1066,7 @@ function createKey() {
 
 /**
  * Creates a string URL path from the given pathname, search, and hash components.
- *
+ * @return pathname + search + hash
  * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#createpath
  */
 export function createPath({
@@ -1046,19 +1080,29 @@ export function createPath({
 /**
  * Parses a string URL path into its separate pathname, search, and hash components.
  *
+ * @example
+ * parsePath('https://juejin.cn/post/7005725282363506701?utm_source=gold_browser_extension#heading-2')
+ * {
+ *   "hash": "#heading-2",
+ *   "search": "?utm_source=gold_browser_extension",
+ *   "pathname": "https://juejin.cn/post/7005725282363506701"
+ * }
+ * 
+ * 从结果可看到，去掉 `hash` 、 `search` 就是 `pathname` 了
+ * 
  * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#parsepath
  */
 export function parsePath(path: string) {
-  let partialPath: PartialPath = {};
+  const partialPath: PartialPath = {};
 
   if (path) {
-    let hashIndex = path.indexOf('#');
+    const hashIndex = path.indexOf('#');
     if (hashIndex >= 0) {
       partialPath.hash = path.substr(hashIndex);
       path = path.substr(0, hashIndex);
     }
 
-    let searchIndex = path.indexOf('?');
+    const searchIndex = path.indexOf('?');
     if (searchIndex >= 0) {
       partialPath.search = path.substr(searchIndex);
       path = path.substr(0, searchIndex);
