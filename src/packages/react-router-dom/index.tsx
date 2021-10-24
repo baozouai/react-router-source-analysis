@@ -128,18 +128,23 @@ export function BrowserRouter({
   children,
   window
 }: BrowserRouterProps) {
-  let historyRef = React.useRef<BrowserHistory>();
+  debugger
+  const historyRef = React.useRef<BrowserHistory>();
   if (historyRef.current == null) {
+    // 如果为空，则创建
     historyRef.current = createBrowserHistory({ window });
   }
 
-  let history = historyRef.current;
-  let [state, setState] = React.useState({
+  const history = historyRef.current;
+  const [state, setState] = React.useState({
     action: history.action,
     location: history.location
   });
 
-  React.useLayoutEffect(() => history.listen(setState), [history]);
+  React.useLayoutEffect(() => {
+    debugger
+    history.listen(setState)
+  }, [history]);
 
   return (
     <Router
@@ -163,13 +168,13 @@ export interface HashRouterProps {
  * portion of the URL so it is not sent to the server.
  */
 export function HashRouter({ basename, children, window }: HashRouterProps) {
-  let historyRef = React.useRef<HashHistory>();
+  const historyRef = React.useRef<HashHistory>();
   if (historyRef.current == null) {
     historyRef.current = createHashHistory({ window });
   }
 
-  let history = historyRef.current;
-  let [state, setState] = React.useState({
+  const history = historyRef.current;
+  const [state, setState] = React.useState({
     action: history.action,
     location: history.location
   });
@@ -206,8 +211,8 @@ export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
     { onClick, replace = false, state, target, to, ...rest },
     ref
   ) {
-    let href = useHref(to);
-    let internalOnClick = useLinkClickHandler(to, { replace, state, target });
+    const href = useHref(to);
+    const internalOnClick = useLinkClickHandler(to, { replace, state, target });
     function handleClick(
       event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
     ) {
@@ -256,8 +261,8 @@ export const NavLink = React.forwardRef<HTMLAnchorElement, NavLinkProps>(
     },
     ref
   ) {
-    let location = useLocation();
-    let path = useResolvedPath(to);
+    const location = useLocation();
+    const path = useResolvedPath(to);
 
     let locationPathname = location.pathname;
     let toPathname = path.pathname;
@@ -266,13 +271,13 @@ export const NavLink = React.forwardRef<HTMLAnchorElement, NavLinkProps>(
       toPathname = toPathname.toLowerCase();
     }
 
-    let isActive =
+    const isActive =
       locationPathname === toPathname ||
       (!end &&
         locationPathname.startsWith(toPathname) &&
         locationPathname.charAt(toPathname.length) === "/");
 
-    let ariaCurrent = isActive ? ariaCurrentProp : undefined;
+    const ariaCurrent = isActive ? ariaCurrentProp : undefined;
 
     let className: string;
     if (typeof classNameProp === "function") {
@@ -288,7 +293,7 @@ export const NavLink = React.forwardRef<HTMLAnchorElement, NavLinkProps>(
         .join(" ");
     }
 
-    let style =
+    const style =
       typeof styleProp === "function" ? styleProp({ isActive }) : styleProp;
 
     return (
@@ -329,9 +334,9 @@ export function useLinkClickHandler<
     state?: S;
   } = {}
 ): (event: React.MouseEvent<E, MouseEvent>) => void {
-  let navigate = useNavigate();
-  let location = useLocation();
-  let path = useResolvedPath(to);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const path = useResolvedPath(to);
 
   return React.useCallback(
     (event: React.MouseEvent<E, MouseEvent>) => {
@@ -344,7 +349,7 @@ export function useLinkClickHandler<
 
         // If the URL hasn't changed, a regular <a> will do a replace instead of
         // a push, so do the same here.
-        let replace =
+        const replace =
           !!replaceProp || createPath(location) === createPath(path);
 
         navigate(to, { replace, state });
@@ -371,11 +376,11 @@ export function useSearchParams(defaultInit?: URLSearchParamsInit) {
       `user.`
   );
 
-  let defaultSearchParamsRef = React.useRef(createSearchParams(defaultInit));
+  const defaultSearchParamsRef = React.useRef(createSearchParams(defaultInit));
 
-  let location = useLocation();
-  let searchParams = React.useMemo(() => {
-    let searchParams = createSearchParams(location.search);
+  const location = useLocation();
+  const searchParams = React.useMemo(() => {
+    const searchParams = createSearchParams(location.search);
 
     for (let key of defaultSearchParamsRef.current.keys()) {
       if (!searchParams.has(key)) {
@@ -388,8 +393,8 @@ export function useSearchParams(defaultInit?: URLSearchParamsInit) {
     return searchParams;
   }, [location.search]);
 
-  let navigate = useNavigate();
-  let setSearchParams = React.useCallback(
+  const navigate = useNavigate();
+  const setSearchParams = React.useCallback(
     (
       nextInit: URLSearchParamsInit,
       navigateOptions?: { replace?: boolean; state?: State }
@@ -440,7 +445,7 @@ export function createSearchParams(
     init instanceof URLSearchParams
       ? init
       : Object.keys(init).reduce((memo, key) => {
-          let value = init[key];
+          const value = init[key];
           return memo.concat(
             Array.isArray(value) ? value.map(v => [key, v]) : [[key, value]]
           );

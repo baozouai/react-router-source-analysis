@@ -46,6 +46,7 @@ export default function App() {
 }
 
 function Layout() {
+  debugger
   return (
     <div>
       <AuthStatus />
@@ -89,7 +90,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   let value = { user, signin, signout };
-
+  debugger
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
@@ -174,6 +175,7 @@ function LoginPage() {
 }
 
 function PublicPage() {
+  debugger
   return <h3>Public</h3>;
 }
 

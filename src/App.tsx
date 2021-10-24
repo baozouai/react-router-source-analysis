@@ -15,37 +15,38 @@ const routeConfigs = [
     path: 'auth',
     Element: Auth,
   },
-  {
-    path: 'basic',
-    Element: Basic,
-  },
-  {
-    path: 'customer-filter-link',
-    Element: CustomFilterLink,
-  },
-  {
-    path: 'customer-link',
-    Element: CustomLink,
-  },
-  {
-    path: 'modal',
-    Element: Modal,
-  },
-  {
-    path: 'search-params',
-    Element: SearchParams,
-  },
-  {
-    path: 'ssr',
-    Element: SSR,
-  },
-  {
-    path: 'use-routes',
-    Element: UseRoutes,
-  },
+  // {
+  //   path: 'basic',
+  //   Element: Basic,
+  // },
+  // {
+  //   path: 'customer-filter-link',
+  //   Element: CustomFilterLink,
+  // },
+  // {
+  //   path: 'customer-link',
+  //   Element: CustomLink,
+  // },
+  // {
+  //   path: 'modal',
+  //   Element: Modal,
+  // },
+  // {
+  //   path: 'search-params',
+  //   Element: SearchParams,
+  // },
+  // {
+  //   path: 'ssr',
+  //   Element: SSR,
+  // },
+  // {
+  //   path: 'use-routes',
+  //   Element: UseRoutes,
+  // },
 ]
 
 function Layout() {
+  debugger
   return (
     <>
       <ul>
@@ -63,7 +64,7 @@ function Layout() {
   )
 }
 function App() {
-
+  debugger
   return (
     <Routes>
       <Route path="/" element={<Layout />}>

@@ -107,13 +107,13 @@ export function MemoryRouter({
   initialEntries,
   initialIndex
 }: MemoryRouterProps): React.ReactElement {
-  let historyRef = React.useRef<MemoryHistory>();
+  const historyRef = React.useRef<MemoryHistory>();
   if (historyRef.current == null) {
     historyRef.current = createMemoryHistory({ initialEntries, initialIndex });
   }
 
-  let history = historyRef.current;
-  let [state, setState] = React.useState({
+  const history = historyRef.current;
+  const [state, setState] = React.useState({
     action: history.action,
     location: history.location
   });
@@ -161,7 +161,7 @@ export function Navigate({ to, replace, state }: NavigateProps): null {
       `only ever rendered in response to some user interaction or state change.`
   );
 
-  let navigate = useNavigate();
+  const navigate = useNavigate();
   React.useEffect(() => {
     navigate(to, { replace, state });
   });
@@ -175,12 +175,17 @@ export interface OutletProps {}
  * Renders the child route's element, if there is one.
  *
  * @see https://reactrouter.com/api/Outlet
+ * 
+ * @example
+ * return useContext(RouteContext).outlet
  */
 export function Outlet(_props: OutletProps): React.ReactElement | null {
+  debugger
   return useOutlet();
 }
 
 export interface RouteProps {
+  /** 用于正则匹配是否要加上i，false才加，表示忽略大小写 */
   caseSensitive?: boolean;
   children?: React.ReactNode;
   element?: React.ReactElement | null;
@@ -189,6 +194,7 @@ export interface RouteProps {
 }
 
 export interface PathRouteProps {
+  /** 用于正则匹配是否要加上i，false才加，表示忽略大小写 */
   caseSensitive?: boolean;
   children?: React.ReactNode;
   element?: React.ReactElement | null;
@@ -202,6 +208,7 @@ export interface LayoutRouteProps {
 }
 
 export interface IndexRouteProps {
+  /** 用于正则匹配是否要加上i，false才加，表示忽略大小写 */
   caseSensitive?: boolean;
   element?: React.ReactElement | null;
   index: true;
@@ -216,6 +223,7 @@ export interface IndexRouteProps {
 export function Route(
   _props: PathRouteProps | LayoutRouteProps | IndexRouteProps
 ): React.ReactElement | null {
+  // Route实际上没有render，只是作为Routes的child
   invariant(
     false,
     `A <Route> is only ever to be used as the child of <Routes> element, ` +
@@ -246,6 +254,7 @@ export function Router({
   basename: basenameProp = "/",
   children = null,
   location: locationProp,
+  /** 实质上就是history */
   navigator,
   static: staticProp = false
 }: RouterProps): React.ReactElement | null {
@@ -255,8 +264,8 @@ export function Router({
       ` You should never have more than one in your app.`
   );
 
-  let basename = normalizePathname(basenameProp);
-  let navigationContext = React.useMemo(
+  const basename = normalizePathname(basenameProp);
+  const navigationContext = React.useMemo(
     () => ({ basename, navigator, static: staticProp }),
     [basename, navigator, staticProp]
   );
@@ -265,7 +274,7 @@ export function Router({
     locationProp = parsePath(locationProp);
   }
 
-  let {
+  const {
     pathname = "/",
     search = "",
     hash = "",
@@ -273,13 +282,18 @@ export function Router({
     key = "default"
   } = locationProp;
 
-  let location = React.useMemo(() => {
-    let trailingPathname = stripBasename(pathname, basename);
+  const location = React.useMemo(() => {
+    // 获取pathname中basename后的字符串
+    const trailingPathname = stripBasename(pathname, basename);
 
     if (trailingPathname == null) {
+      // 1.pathname不是以basename开头的
+      // 2.pathname以basename开头的，但不是以`${basename}/`开头
       return null;
     }
-
+    // 到了这里则：
+    // 1.basename === "/"
+    // 2.pathname以`${basename}/`开头
     return {
       pathname: trailingPathname,
       search,
@@ -295,7 +309,7 @@ export function Router({
       `"${pathname}${search}${hash}" because it does not start with the ` +
       `basename, so the <Router> won't render anything.`
   );
-
+  // 上面有警告，然后下面location为null就不会渲染任何组件
   if (location == null) {
     return null;
   }
@@ -316,6 +330,7 @@ export interface RoutesProps {
 }
 
 /**
+ * @description <Route> elements 的容器
  * A container for a nested tree of <Route> elements that renders the branch
  * that best matches the current location.
  *
@@ -325,6 +340,7 @@ export function Routes({
   children,
   location
 }: RoutesProps): React.ReactElement | null {
+  debugger
   return useRoutes(createRoutesFromChildren(children), location);
 }
 
@@ -346,12 +362,12 @@ export function useHref(to: To): string {
     `useHref() may be used only in the context of a <Router> component.`
   );
 
-  let { basename, navigator } = React.useContext(NavigationContext);
-  let path = useResolvedPath(to);
+  const { basename, navigator } = React.useContext(NavigationContext);
+  const path = useResolvedPath(to);
 
   if (basename !== "/") {
-    let toPathname = getToPathname(to);
-    let endsWithSlash = toPathname != null && toPathname.endsWith("/");
+    const toPathname = getToPathname(to);
+    const endsWithSlash = toPathname != null && toPathname.endsWith("/");
     path.pathname =
       path.pathname === "/"
         ? basename + (endsWithSlash ? "/" : "")
@@ -362,6 +378,8 @@ export function useHref(to: To): string {
 }
 
 /**
+ * @description React.useContext(LocationContext) != null
+ * 
  * Returns true if this component is a descendant of a <Router>.
  *
  * @see https://reactrouter.com/api/useInRouterContext
@@ -371,6 +389,7 @@ export function useInRouterContext(): boolean {
 }
 
 /**
+ * @description 从 `LocationContext` 获取location，所以必须用于 `LocationContext` 中
  * Returns the current location object, which represents the current URL in web
  * browsers.
  *
@@ -438,20 +457,20 @@ export function useNavigate(): NavigateFunction {
     `useNavigate() may be used only in the context of a <Router> component.`
   );
 
-  let { basename, navigator } = React.useContext(NavigationContext);
-  let { matches } = React.useContext(RouteContext);
-  let { pathname: locationPathname } = useLocation();
+  const { basename, navigator } = React.useContext(NavigationContext);
+  const { matches } = React.useContext(RouteContext);
+  const { pathname: locationPathname } = useLocation();
 
-  let routePathnamesJson = JSON.stringify(
+  const routePathnamesJson = JSON.stringify(
     matches.map(match => match.pathnameBase)
   );
 
-  let activeRef = React.useRef(false);
+  const activeRef = React.useRef(false);
   React.useEffect(() => {
     activeRef.current = true;
   });
 
-  let navigate: NavigateFunction = React.useCallback(
+  const navigate: NavigateFunction = React.useCallback(
     (to: To | number, options: { replace?: boolean; state?: State } = {}) => {
       warning(
         activeRef.current,
@@ -466,7 +485,7 @@ export function useNavigate(): NavigateFunction {
         return;
       }
 
-      let path = resolveTo(
+      const path = resolveTo(
         to,
         JSON.parse(routePathnamesJson),
         locationPathname
@@ -506,8 +525,8 @@ export function useOutlet(): React.ReactElement | null {
 export function useParams<Key extends string = string>(): Readonly<
   Params<Key>
 > {
-  let { matches } = React.useContext(RouteContext);
-  let routeMatch = matches[matches.length - 1];
+  const { matches } = React.useContext(RouteContext);
+  const routeMatch = matches[matches.length - 1];
   return routeMatch ? (routeMatch.params as any) : {};
 }
 
@@ -517,10 +536,10 @@ export function useParams<Key extends string = string>(): Readonly<
  * @see https://reactrouter.com/api/useResolvedPath
  */
 export function useResolvedPath(to: To): Path {
-  let { matches } = React.useContext(RouteContext);
-  let { pathname: locationPathname } = useLocation();
+  const { matches } = React.useContext(RouteContext);
+  const { pathname: locationPathname } = useLocation();
 
-  let routePathnamesJson = JSON.stringify(
+  const routePathnamesJson = JSON.stringify(
     matches.map(match => match.pathnameBase)
   );
 
@@ -531,6 +550,8 @@ export function useResolvedPath(to: To): Path {
 }
 
 /**
+ * @description 返回与当前路径匹配的route element，用正确的上下文来render路由树是其他部分。
+ * 树中的 route elements必须render在<Outlet>来render它们的子 route elements
  * Returns the element of the route that matched the current location, prepared
  * with the correct context to render the remainder of the route tree. Route
  * elements in the tree must render an <Outlet> to render their child route's
@@ -542,26 +563,39 @@ export function useRoutes(
   routes: RouteObject[],
   locationArg?: Partial<Location> | string
 ): React.ReactElement | null {
+  debugger
   invariant(
     useInRouterContext(),
     // TODO: This error is probably because they somehow have 2 versions of the
     // router loaded. We can help them understand how to avoid that.
     `useRoutes() may be used only in the context of a <Router> component.`
   );
+  /**
+   * typeof RouteContext = {
+   *   outlet: React.ReactElement | null;
+   *   matches: RouteMatch[];
+   * }
+   */
+  const { matches: parentMatches } = React.useContext(RouteContext);
+  // 比如当前路径为：http://localhost:3000/auth，
+  // parentMatches为：[
+  //   { params: {*: ''}, pathname: "/", pathnameBase: "/", route: {path: "/", children: [{...}, {...}]} },
+  //   { params: {*: ''}, pathname: "/auth", pathnameBase: "/auth", route: { path: "auth/*" } }
+  // ]
+  // 拿parentMatches的最后一个,从上面例子可看到最后一个parentMatch是最接近的
+  const routeMatch = parentMatches[parentMatches.length - 1];
+  // 如果match了，获取params、pathname、pathnameBase
+  const parentParams = routeMatch ? routeMatch.params : {};
+  const parentPathname = routeMatch ? routeMatch.pathname : "/";
+  const parentPathnameBase = routeMatch ? routeMatch.pathnameBase : "/";
+  const parentRoute = routeMatch && routeMatch.route;
 
-  let { matches: parentMatches } = React.useContext(RouteContext);
-  let routeMatch = parentMatches[parentMatches.length - 1];
-  let parentParams = routeMatch ? routeMatch.params : {};
-  let parentPathname = routeMatch ? routeMatch.pathname : "/";
-  let parentPathnameBase = routeMatch ? routeMatch.pathnameBase : "/";
-  let parentRoute = routeMatch && routeMatch.route;
-
-
-  let locationFromContext = useLocation();
+  // 从 LocationContext 获取location
+  const locationFromContext = useLocation();
 
   let location;
   if (locationArg) {
-    let parsedLocationArg =
+    const parsedLocationArg =
       typeof locationArg === "string" ? parsePath(locationArg) : locationArg;
 
     invariant(
@@ -577,13 +611,17 @@ export function useRoutes(
   } else {
     location = locationFromContext;
   }
-
-  let pathname = location.pathname || "/";
-  let remainingPathname =
+  // 一般来说，对于http://localhost:3000/auth，location.pathname为/auth
+  const pathname = location.pathname || "/";
+  // parentPathnameBase不为 '/'那么就从pathname中的parentPathnameBase后截取
+  // eg: pathname = `${parentPathnameBase}xxx`，remainingPathname = 'xxx'
+  // eg: pathname = `/auth`，remainingPathname = '/'
+  // eg: pathname = `/auth/login`，parentPathnameBase = '/auth', remainingPathname = '/login'
+  const remainingPathname =
     parentPathnameBase === "/"
       ? pathname
       : pathname.slice(parentPathnameBase.length) || "/";
-  let matches = matchRoutes(routes, { pathname: remainingPathname });
+  const matches = matchRoutes(routes, { pathname: remainingPathname });
 
   return _renderMatches(
     matches &&
@@ -603,6 +641,15 @@ export function useRoutes(
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
+ * @description 创建一个route配置: 
+ * @example
+ * {
+ *  caseSensitive?: boolean;
+ *  children?: RouteObject[];
+ *  element?: React.ReactNode;
+ *  index?: boolean;
+ *  path?: string;
+ * }[]
  * Creates a route config from a React "children" object, which is usually
  * either a `<Route>` element or an array of them. Used internally by
  * `<Routes>` to create a route config from its children.
@@ -613,15 +660,17 @@ export function createRoutesFromChildren(
   children: React.ReactNode
 ): RouteObject[] {
   let routes: RouteObject[] = [];
-
+  debugger
   React.Children.forEach(children, element => {
     if (!React.isValidElement(element)) {
+      // 忽悠掉 non-elements
       // Ignore non-elements. This allows people to more easily inline
       // conditionals in their route config.
       return;
     }
 
     if (element.type === React.Fragment) {
+      // element为<></>
       // Transparently support React.Fragment and its children.
       routes.push.apply(
         routes,
@@ -630,7 +679,7 @@ export function createRoutesFromChildren(
       return;
     }
 
-    let route: RouteObject = {
+    const route: RouteObject = {
       caseSensitive: element.props.caseSensitive,
       element: element.props.element,
       index: element.props.index,
@@ -638,6 +687,14 @@ export function createRoutesFromChildren(
     };
 
     if (element.props.children) {
+      /**
+       * 如果有children
+       * @example
+       * <Route path="/" element={<Layout />}>
+       *  <Route path='user/*'/>
+       *  <Route path='dashboard/*'/>
+       * </Route>
+       */
       route.children = createRoutesFromChildren(element.props.children);
     }
 
@@ -705,27 +762,27 @@ export interface RouteMatch<ParamKey extends string = string> {
 
 /**
  * Matches the given routes to a location and returns the match data.
- *
- * @see https://reactrouter.com/api/matchRoutes
  */
 export function matchRoutes(
   routes: RouteObject[],
   locationArg: Partial<Location> | string,
   basename = "/"
 ): RouteMatch[] | null {
-  let location =
+  const location =
     typeof locationArg === "string" ? parsePath(locationArg) : locationArg;
-
-  let pathname = stripBasename(location.pathname || "/", basename);
+  // pathname是一个取出来basename的相对路径
+  const pathname = stripBasename(location.pathname || "/", basename);
 
   if (pathname == null) {
     return null;
   }
-
-  let branches = flattenRoutes(routes);
+  // routes有可能是多层设置，那么flatten下
+  const branches = flattenRoutes(routes);
+  // 通过score或childrenIndex[]排序branch
   rankRouteBranches(branches);
 
   let matches = null;
+  // 直到`matches`有值(意味着匹配到，那么自然不用再找了）或遍历完`branches`才跳出循环
   for (let i = 0; matches == null && i < branches.length; ++i) {
     matches = matchRouteBranch(branches[i], routes, pathname);
   }
@@ -744,7 +801,9 @@ interface RouteBranch {
   score: number;
   routesMeta: RouteMeta[];
 }
-
+/**
+ * @description 如果route有children，会先把children处理完push `branches`，然后再push该`route`
+ */
 function flattenRoutes(
   routes: RouteObject[],
   branches: RouteBranch[] = [],
@@ -752,55 +811,121 @@ function flattenRoutes(
   parentPath = ""
 ): RouteBranch[] {
   routes.forEach((route, index) => {
-    let meta: RouteMeta = {
+    const meta: RouteMeta = {
       relativePath: route.path || "",
       caseSensitive: route.caseSensitive === true,
       childrenIndex: index
     };
 
     if (meta.relativePath.startsWith("/")) {
+      // 如果相对路径以"/"开头，说明是绝对路径，那么必须要以parentPath开头，否则这里会报错。
+      // 因为这里是嵌套在parentPath下的路由
       invariant(
         meta.relativePath.startsWith(parentPath),
         `Absolute route path "${meta.relativePath}" nested under path ` +
           `"${parentPath}" is not valid. An absolute child route path ` +
           `must start with the combined path of all its parent routes.`
       );
-
+      // 到这里就说明是以parentPath开头了，那么相对路径不需要parentPath，取后面的
       meta.relativePath = meta.relativePath.slice(parentPath.length);
     }
-
-    let path = joinPaths([parentPath, meta.relativePath]);
-    let routesMeta = parentsMeta.concat(meta);
+    // 将parentPath, meta.relativePath用 / 连起来成为绝对路径
+    const path = joinPaths([parentPath, meta.relativePath]);
+    // 这里用concat就不会影响到parentsMeta
+    const routesMeta = parentsMeta.concat(meta);
 
     // Add the children before adding this route to the array so we traverse the
     // route tree depth-first and child routes appear before their parents in
     // the "flattened" version.
     if (route.children && route.children.length > 0) {
+      // 如果route有children，那么不能为index route，即其prop的index不能为true
       invariant(
         route.index !== true,
         `Index routes must not have child routes. Please remove ` +
           `all child routes from route path "${path}".`
       );
-
+      // 有children的先处理children，处理完的children branch放进branches
       flattenRoutes(route.children, branches, routesMeta, path);
     }
 
     // Routes without a path shouldn't ever match by themselves unless they are
     // index routes, so don't add them to the list of possible branches.
     if (route.path == null && !route.index) {
+      // 如果route没有path，且不是index route，那么不放入branches
+      /**
+       * @example
+       * 对于 examples/auth/index.tsx, http://localhost:3000/auth
+       * // 最外层的Route就没有path和index，那么就return
+       * 
+       * <Route element={<Layout />}>
+       *   <Route path="" element={<PublicPage />} />
+       *   <Route path="login" element={<LoginPage />} />
+       *   <Route
+       *     path="protected"
+       *     caseSensitive
+       *     element={
+       *       <RequireAuth>
+       *         <ProtectedPage />
+       *       </RequireAuth>
+       *     }
+       *   />
+       * </Route>
+       * 
+       * 那么最终最下面收集到的branches为：
+       * [
+       *  {
+       *   path: '/', score: 4, routesMeta: [
+       *     {relativePath: "",caseSensitive: false,childrenIndex: 0},
+       *     {relativePath: "",caseSensitive: false,childrenIndex: 0}
+       *   ]
+       * },
+       *  {
+       *   path: '/login', score: 13, routesMeta: [
+       *     {relativePath: "",caseSensitive: false,childrenIndex: 0},
+       *     {relativePath: "login",caseSensitive: false,childrenIndex: 1}
+       * ]
+       * },
+       *  {
+       *   path: '/protected', score: 13, routesMeta: [
+       *     {relativePath: "",caseSensitive: false,childrenIndex: 0},
+       *     {relativePath: "protected",caseSensitive: true,childrenIndex: 2}
+       *   ]
+       * }
+       * ]
+       */
       return;
     }
-
+    // 到了这里满足上面的所有条件了，那么放入branches
     branches.push({ path, score: computeScore(path, route.index), routesMeta });
   });
 
   return branches;
 }
-
+function compareIndexes(a: number[], b: number[]): number {
+  // slice(0, -1)是获取【除最后一个】的前面元素(parents route)
+  // 这里叫siblings是因为最后一个是该 route的index，parent route都在前面，
+  // 为true的话说明a、b长度相等，且除最后一个selfIndex外前面的所有`parentIndex`都相等，那么就肯定是siblings了
+  const siblings =
+    a.length === b.length && a.slice(0, -1).every((n, i) => n === b[i]);
+  // 那么如果是siblings，那么比较它们的selfIndex值就知道哪个排前面了，排前面的就会优先match了
+  return siblings
+    ? // If two routes are siblings, we should try to match the earlier sibling
+      // first. This allows people to have fine-grained control over the matching
+      // behavior by simply putting routes with identical paths in the order they
+      // want them tried.
+      a[a.length - 1] - b[b.length - 1]
+    : // Otherwise, it doesn't really make sense to rank non-siblings by index,
+      // so they sort equally.
+      // 如果selfIndex都相等，那么就返回0了，但目前还不清楚怎么出现这种情况？
+      0;
+}
+/** 通过`score`或`childrenIndex[]`排序`branch` */
 function rankRouteBranches(branches: RouteBranch[]): void {
   branches.sort((a, b) =>
     a.score !== b.score
+    // 不等的话，高的排前面
       ? b.score - a.score // Higher score first
+      // score相等的话，那么判断是否是siblings，是的话比较selfIndex(小的排前面)，否则相等
       : compareIndexes(
           a.routesMeta.map(meta => meta.childrenIndex),
           b.routesMeta.map(meta => meta.childrenIndex)
@@ -815,18 +940,26 @@ const emptySegmentValue = 1;
 const staticSegmentValue = 10;
 const splatPenalty = -2;
 const isSplat = (s: string) => s === "*";
-
+/**
+ * @description 计算path的得分，用来排序`branches`，得分越多排序越前，见上面的`rankRouteBranches`
+ */
 function computeScore(path: string, index: boolean | undefined): number {
-  let segments = path.split("/");
+  // 获取片段
+  const segments = path.split("/");
   let initialScore = segments.length;
   if (segments.some(isSplat)) {
+    // 如果任一片段等于*，那么-2
     initialScore += splatPenalty;
   }
 
   if (index) {
+    // 如果是index route， 那么+2
     initialScore += indexRouteValue;
   }
-
+  // 过滤掉片段中等于*的，然后遍历每一片段，累加initialScore
+  // - 如果该片段是动态的，比如:id,那么+3
+  // - 如果该片段是空字符串""，那么+1
+  // - 否则+10
   return segments
     .filter(s => !isSplat(s))
     .reduce(
@@ -841,21 +974,6 @@ function computeScore(path: string, index: boolean | undefined): number {
     );
 }
 
-function compareIndexes(a: number[], b: number[]): number {
-  let siblings =
-    a.length === b.length && a.slice(0, -1).every((n, i) => n === b[i]);
-
-  return siblings
-    ? // If two routes are siblings, we should try to match the earlier sibling
-      // first. This allows people to have fine-grained control over the matching
-      // behavior by simply putting routes with identical paths in the order they
-      // want them tried.
-      a[a.length - 1] - b[b.length - 1]
-    : // Otherwise, it doesn't really make sense to rank non-siblings by index,
-      // so they sort equally.
-      0;
-}
-
 function matchRouteBranch<ParamKey extends string = string>(
   branch: RouteBranch,
   // TODO: attach original route object inside routesMeta so we don't need this arg
@@ -863,28 +981,35 @@ function matchRouteBranch<ParamKey extends string = string>(
   pathname: string
 ): RouteMatch<ParamKey>[] | null {
   let routes = routesArg;
-  let { routesMeta } = branch;
-
-  let matchedParams = {};
+  const { routesMeta } = branch;
+  /** 已匹配到的动态参数 */
+  const matchedParams = {};
+  /** 表示已经匹配到的路径名 */
   let matchedPathname = "/";
-  let matches: RouteMatch[] = [];
+  const matches: RouteMatch[] = [];
   for (let i = 0; i < routesMeta.length; ++i) {
-    let meta = routesMeta[i];
-    let end = i === routesMeta.length - 1;
-    let remainingPathname =
+    const meta = routesMeta[i];
+    // 是否到了最后一个routesMeta
+    const end = i === routesMeta.length - 1;
+    // remainingPathname表示剩下还没匹配到的路径
+    // matchedPathname不为 '/'那么就从pathname中的matchedPathname后截取
+    // eg: pathname = `${matchedPathname}xxx`，remainingPathname = 'xxx'
+    // eg: matchedPathname = '/', pathname = `/`，remainingPathname = '/'
+    // eg: matchedPathname = '/', pathname = `/auth`，remainingPathname = '/auth'
+    const remainingPathname =
       matchedPathname === "/"
         ? pathname
         : pathname.slice(matchedPathname.length) || "/";
-    let match = matchPath(
+    const match = matchPath(
       { path: meta.relativePath, caseSensitive: meta.caseSensitive, end },
       remainingPathname
     );
-
+      // 只要有一个没match到，就return掉，意味着即使前面的都match了，但如果最后一个没match到，最终matchRouteBranch还是null
     if (!match) return null;
 
     Object.assign(matchedParams, match.params);
 
-    let route = routes[meta.childrenIndex];
+    const route = routes[meta.childrenIndex];
 
     matches.push({
       params: matchedParams,
@@ -896,7 +1021,7 @@ function matchRouteBranch<ParamKey extends string = string>(
     if (match.pathnameBase !== "/") {
       matchedPathname = joinPaths([matchedPathname, match.pathnameBase]);
     }
-
+    // 上面已经match到了，那么继续从其children中查找，特别注意的是routes的层次与routesMeta.length相对，所以这里加了!
     routes = route.children!;
   }
 
@@ -916,9 +1041,35 @@ function _renderMatches(
   matches: RouteMatch[] | null,
   parentMatches: RouteMatch[] = []
 ): React.ReactElement | null {
+  debugger
   if (matches == null) return null;
 
+  /**
+   * 这里生成的结构如下，即对于matches `index + 1` 生成的Provider作为 `index` Provider value的outlet(出口) ：
+   * // matches.length = 2
+   * return (
+   *   <RouteContext.Provider
+   *     value={{
+   *       matches: parentMatches.concat(matches.slice(0, 1)),
+   *       outlet: (
+   *       <RouteContext.Provider
+   *         value={{
+   *           matches: parentMatches.concat(matches.slice(0:2)),
+   *           outlet: null // 第一次outlet为null,
+   *         }}
+   *       >
+   *         {<Layout2 /> || <Outlet />}
+   *       </RouteContext.Provider>
+   *     ),
+   *     }}
+   *   >
+   *     {<Layout1 /> || <Outlet />}
+   *   </RouteContext.Provider>
+   * )
+   */
   return matches.reduceRight((outlet, match, index) => {
+    debugger
+    // 如果match.route.element为空，那么<Outlet />实际上就是该RouteContext的outlet，就是下面value的outlet
     return (
       <RouteContext.Provider
         children={match.route.element || <Outlet />}
@@ -991,25 +1142,32 @@ export function matchPath<ParamKey extends string = string>(
   if (typeof pattern === "string") {
     pattern = { path: pattern, caseSensitive: false, end: true };
   }
-
-  let [matcher, paramNames] = compilePath(
+  // 根据pattern.path生成正则以及获取path中的动态参数
+  const [matcher, paramNames] = compilePath(
     pattern.path,
     pattern.caseSensitive,
     pattern.end
   );
-
-  let match = pathname.match(matcher);
+  // pattern.path生成正则是否match传入的pathname
+  const match = pathname.match(matcher);
   if (!match) return null;
 
-  let matchedPathname = match[0];
+  const matchedPathname = match[0];
+  // eg: 'auth/'.replace(/(.)\/+$/, "$1") => 'auth // 即(.)，$1表示第一个匹配到的小括号中的值;
+  // eg: 'auth/*'.replace(/(.)\/+$/, "$1") => 'auth/*'; // 不匹配，返回原字符串
   let pathnameBase = matchedPathname.replace(/(.)\/+$/, "$1");
-  let captureGroups = match.slice(1);
-  let params: Params = paramNames.reduce<Mutable<Params>>(
+  // eg: pattern = {path: 'auth/*', caseSensitive: false, end: true}, pathname = '/auth/login';
+  //     matcher = /^\/auth(?:\/(.+)|\/*)$/i, paramNames = ['*'];
+  //     match = ['/auth/login', 'login', index: 0, input: '/auth/login', groups: undefined]
+  // 那么 matchedPathname = '/auth/login', captureGroups = ['login'], params = { '*': 'login' }, pathnamebase = '/auth'
+  // 从第二项就是()中匹配的，所以叫slice从1开始
+  const captureGroups = match.slice(1);
+  const params: Params = paramNames.reduce<Mutable<Params>>(
     (memo, paramName, index) => {
       // We need to compute the pathnameBase here using the raw splat value
       // instead of using params["*"] later because it will be decoded then
       if (paramName === "*") {
-        let splatValue = captureGroups[index] || "";
+        const splatValue = captureGroups[index] || "";
         pathnameBase = matchedPathname
           .slice(0, matchedPathname.length - splatValue.length)
           .replace(/(.)\/+$/, "$1");
@@ -1031,7 +1189,21 @@ export function matchPath<ParamKey extends string = string>(
     pattern
   };
 }
-
+/**
+ * @description: 根据path生成正则以及获取path中的动态参数
+ * @param {string} path path不能是：xxx*，如果尾部是*，那么需要以"/*"结尾，正常的"/", "/auth"没问题
+ * @param {boolean} caseSensitive 默认false，根据path生成的正则是否忽略大小写
+ * @param {boolean} end 默认true，是否到了最后一个routesMeta
+ * @return {[RegExp, string[]]} 正则以及获取path中的动态参数
+ * 
+ * @example
+ * 
+ * compilePath('/') => matcher = /^\/\/*$/i
+ * compilePath('/', true, false) => matcher = /^\/(?:\b|$)/i
+ * compilePath('/auth') => matcher = /^\/auth\/*$/i
+ * compilePath('/auth/public', true) => matcher = /^\/auth\/public\/*$/
+ * compilePath('auth/*', true) => matcher = /^\/auth(?:\/(.+)|\/*)$/
+ */
 function compilePath(
   path: string,
   caseSensitive = false,
@@ -1044,39 +1216,95 @@ function compilePath(
       `always follow a \`/\` in the pattern. To get rid of this warning, ` +
       `please change the route path to "${path.replace(/\*$/, "/*")}".`
   );
-
-  let paramNames: string[] = [];
+  // 动态参数名数组
+  // eg: '/auth/:id/www/:name/ee' => paramNames = ['id', 'name']
+  const paramNames: string[] = [];
   let regexpSource =
     "^" +
     path
-      .replace(/\/*\*?$/, "") // Ignore trailing / and /*, we'll handle it below
-      .replace(/^\/*/, "/") // Make sure it has a leading /
-      .replace(/[\\.*+^$?{}|()[\]]/g, "\\$&") // Escape special regex chars
-      .replace(/:(\w+)/g, (_: string, paramName: string) => {
+      .replace(/\/*\*?$/, "") // 去掉'/'或'/*'
+      .replace(/^\/*/, "/") //  开头没'/'那么加上；开头有多个'/',那么保留一个；eg: (//auth | auth) => /auth
+      .replace(/[\\.*+^$?{}|()[\]]/g, "\\$&") // 对\.*+^$?{}或()[]都给加上\,eg: `()[]` => '\(\)\[\]';`.*+^$?{}` => '\.\*\+\^\$\?\{\}'
+      .replace(/:(\w+)/g, (_: string, paramName: string) => {  // \w ===  [A-Za-z0-9_]
         paramNames.push(paramName);
+        /** [^\\/]+ 表示不能是出现/
+         * @example
+         * '/auth/:id/www/:name/ee' => '/auth/([^\/]+)/www/([^\/]+)/ee'
+         * const reg = new RegExp('/auth/([^\/]+)/www/([^\/]+)/ee', 'i')
+         * reg.test('/auth/33/www/a1_A/ee') // params = ['33', 'a1_A'], true
+         * reg.test('/auth/33/www/a1_A//ee')) // params = ['33', 'a1_A/'], false
+         */
         return "([^\\/]+)";
       });
 
   if (path.endsWith("*")) {
+    // 如果path以"*"结尾，那么paramNames也push
     paramNames.push("*");
     regexpSource +=
+      // 如果path等于*或/*
       path === "*" || path === "/*"
-        ? "(.*)$" // Already matched the initial /, just match the rest
+        ? "(.*)$" // Already matched the initial /, just match the rest (.*)$表示match剩下的
+        /**
+         * (?:x)，匹配 'x' 但是不记住匹配项。这种括号叫作非捕获括号，使得你能够定义与正则表达式运算符一起使用的子表达式。
+         * @example
+         * eg1: 
+         * /(?:foo){1,2}/。如果表达式是 /foo{1,2}/，{1,2} 将只应用于 'foo' 的最后一个字符 'o'。
+         * 如果使用非捕获括号，则 {1,2} 会应用于整个 'foo' 单词
+         * 
+         * eg2: 对比下两种exec的结果
+         * const reg = new RegExp('w(?:\\d+)e')
+         * reg.exec('w12345e')
+         * ['w12345e', index: 0, input: 'w12345e', groups: undefined] // 不记住匹配项
+         * 
+         * 而
+         * const reg = new RegExp('w(\\d+)e')
+         * reg.exec('w12345e')
+         * ['w12345e', '12345', index: 0, input: 'w12345e', groups: undefined] // 记住匹配项
+         * 
+         * 本处eg：
+         * path = 'xxx/*'
+         * const reg = new RegExp("xxx(?:\\/(.+)|\\/*)$", 'i')
+         * 下面的abc是(.+)中的
+         * reg.exec('xxx/abc') // ['xxx/abc', 'abc', index: 0, input: 'xxx/abc', groups: undefined]
+         * 下面两处满足 `|` 后面的\\/*: '/' 出现出现零次或者多次 
+         * reg.exec('xxx') //  ['xxx', undefined, index: 0, input: 'xxx', groups: undefined]
+         * reg.exec('xxx/') //  ['xxx/', undefined, index: 0, input: 'xxx/', groups: undefined]
+         * 当>= 2个'/'，就又变成满足\\/(.+)了，所以个人感觉这里的\\/*是不是应该改为\\/{0,1} ????
+         * reg.exec('xxx//') //  ['xxx//','/', index: 0, input: 'xxx//', groups: undefined]
+         */
         : "(?:\\/(.+)|\\/*)$"; // Don't include the / in params["*"]
   } else {
+    // path不以"*"结尾
     regexpSource += end
-      ? "\\/*$" // When matching to the end, ignore trailing slashes
+      ? "\\/*$" // When matching to the end, ignore trailing slashes end的话，忽略斜杠"/"
       : // Otherwise, at least match a word boundary. This restricts parent
         // routes to matching only their own words and nothing more, e.g. parent
         // route "/home" should not match "/home2".
+        /**
+         * 否则，至少匹配到一个单词边界，这限制了parent routes只能匹配自己的单词。比如/home不允许匹配为/home2。
+         * 
+         * \b: 匹配这样的位置：它的前一个字符和后一个字符不全是(一个是,一个不是或不存在) \w (\w ===  [A-Za-z0-9_])
+         * 通俗的理解，\b 就是“隐式位置”
+         * "It"中 'I' 和 't' 就是显示位置，中间是“隐式位置”。 更多可见：https://www.cnblogs.com/litmmp/p/4925374.html
+         * 使用"moon"举例：
+         * /\bm/匹配“moon”中的‘m’；
+         * /oo\b/并不匹配"moon"中的'oo'，因为'oo'被一个“字”字符'n'紧跟着
+         * /oon\b/匹配"moon"中的'oon'，因为'oon'是这个字符串的结束部分。这样他没有被一个“字”字符紧跟着
+         * 
+         * 本例：
+         * compilePath('/', true, false) => matcher = /^\/(?:\b|$)/i
+         * '/auth'.match(/^\/(?:\b|$)/i) // ['/', index: 0, input: '/auth', groups: undefined]
+         * 'auth'.match(/^\/(?:\b|$)/i) // null
+         * reg.exec('/xxx2') or reg.exec('/xxxx') // null
+         *  */ 
         "(?:\\b|$)";
   }
 
-  let matcher = new RegExp(regexpSource, caseSensitive ? undefined : "i");
+  const matcher = new RegExp(regexpSource, caseSensitive ? undefined : "i");
 
   return [matcher, paramNames];
 }
-
+/** decodeURIComponent(value) */
 function safelyDecodeURIComponent(value: string, paramName: string) {
   try {
     return decodeURIComponent(value);
@@ -1098,13 +1326,13 @@ function safelyDecodeURIComponent(value: string, paramName: string) {
  * @see https://reactrouter.com/api/resolvePath
  */
 export function resolvePath(to: To, fromPathname = "/"): Path {
-  let {
+  const {
     pathname: toPathname,
     search = "",
     hash = ""
   } = typeof to === "string" ? parsePath(to) : to;
 
-  let pathname = toPathname
+  const pathname = toPathname
     ? toPathname.startsWith("/")
       ? toPathname
       : resolvePathname(toPathname, fromPathname)
@@ -1118,8 +1346,8 @@ export function resolvePath(to: To, fromPathname = "/"): Path {
 }
 
 function resolvePathname(relativePath: string, fromPathname: string): string {
-  let segments = fromPathname.replace(/\/+$/, "").split("/");
-  let relativeSegments = relativePath.split("/");
+  const segments = fromPathname.replace(/\/+$/, "").split("/");
+  const relativeSegments = relativePath.split("/");
 
   relativeSegments.forEach(segment => {
     if (segment === "..") {
@@ -1138,8 +1366,8 @@ function resolveTo(
   routePathnames: string[],
   locationPathname: string
 ): Path {
-  let to = typeof toArg === "string" ? parsePath(toArg) : toArg;
-  let toPathname = toArg === "" || to.pathname === "" ? "/" : to.pathname;
+  const to = typeof toArg === "string" ? parsePath(toArg) : toArg;
+  const toPathname = toArg === "" || to.pathname === "" ? "/" : to.pathname;
 
   // If a pathname is explicitly provided in `to`, it should be relative to the
   // route context. This is explained in `Note on `<Link to>` values` in our
@@ -1155,7 +1383,7 @@ function resolveTo(
     let routePathnameIndex = routePathnames.length - 1;
 
     if (toPathname.startsWith("..")) {
-      let toSegments = toPathname.split("/");
+      const toSegments = toPathname.split("/");
 
       // Each leading .. segment means "go up one route" instead of "go up one
       // URL segment".  This is a key difference from how <a href> works and a
@@ -1173,7 +1401,7 @@ function resolveTo(
     from = routePathnameIndex >= 0 ? routePathnames[routePathnameIndex] : "/";
   }
 
-  let path = resolvePath(to, from);
+  const path = resolvePath(to, from);
 
   // Ensure the pathname has a trailing slash if the original to value had one.
   if (
@@ -1196,29 +1424,56 @@ function getToPathname(to: To): string | undefined {
     ? parsePath(to).pathname
     : to.pathname;
 }
-
+/**
+ * @description 获取pathname中basename后的字符串，如果basename是/,直接返回该pathname
+ */
 function stripBasename(pathname: string, basename: string): string | null {
   if (basename === "/") return pathname;
-
+  // 如果pathname不是以basename开头的，那么return null
   if (!pathname.toLowerCase().startsWith(basename.toLowerCase())) {
     return null;
   }
-
-  let nextChar = pathname.charAt(basename.length);
+  // 到了这里pathname是以basename开头且basename不为 "/"
+  // nextChar为pathname中basename的下一个字符
+  const nextChar = pathname.charAt(basename.length);
   if (nextChar && nextChar !== "/") {
+    // pathname不是以`${basename}/`开头
     // pathname does not start with basename/
     return null;
   }
-
+  // pathname以`${basename}/`开头
+  // pathname.slice(basename.length)： eg: pathname = `${basename}/xxx`, pathname.slice(basename.length) = '/xxx'
   return pathname.slice(basename.length) || "/";
 }
-
+/** 
+ * @description 将paths用 `/` 连起来，然后替换掉所有 `//`
+ * 
+ * @example
+ * - joinPaths(['baozouai', '/react-router-source-analysis']) => 'baozouai/react-router-source-analysis'
+ * - joinPaths(['baozouai/', '/react-router-source-analysis']) => 'baozouai/react-router-source-analysis'
+ */
 const joinPaths = (paths: string[]): string =>
   paths.join("/").replace(/\/\/+/g, "/");
-
+/**
+ * @description 去除掉尾部的/,头部如果有多个"/",只保留一个
+ * 
+ * @example
+ * normalizePathname('//github.com/baozouai//') => '/github.com/baozouai'
+ */
 const normalizePathname = (pathname: string): string =>
   pathname.replace(/\/+$/, "").replace(/^\/*/, "/");
 
+/**
+ * @description 
+ * - `search`为空字符串""或只有"?"，那么返回空字符串""
+ * - 如果不是上面的情况且`search`以?开头，那么直接返回`search`
+ * - 否则返回`"?" + search`
+ * @example
+ * normalizeSearch('') => ''
+ * normalizeSearch('?') => ''
+ * normalizeSearch('?a') => '?a'
+ * normalizeSearch('a') => '?a'
+ */
 const normalizeSearch = (search: string): string =>
   !search || search === "?"
     ? ""
@@ -1226,9 +1481,19 @@ const normalizeSearch = (search: string): string =>
     ? search
     : "?" + search;
 
+/**
+ * @description 
+ * - `hash`为空字符串""或只有"#"，那么返回空字符串""
+ * - 如果不是上面的情况且`hash`以#开头，那么直接返回`hash`
+ * - 否则返回`"#" + hash`
+ * @example
+ * normalizeHash('') => ''
+ * normalizeHash('#') => ''
+ * normalizeHash('#a') => '#a'
+ * normalizeHash('a') => '#a'
+ */
 const normalizeHash = (hash: string): string =>
   !hash || hash === "#" ? "" : hash.startsWith("#") ? hash : "#" + hash;
-
 ///////////////////////////////////////////////////////////////////////////////
 // DANGER! PLEASE READ ME!
 // We provide these exports as an escape hatch in the event that you need any
