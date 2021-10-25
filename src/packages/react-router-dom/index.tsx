@@ -143,9 +143,10 @@ export function BrowserRouter({
 
   React.useLayoutEffect(() => {
     debugger
+    // popstate、push、replace会触发这里的setState
     history.listen(setState)
   }, [history]);
-
+  // 一般变化的就是action和location
   return (
     <Router
       basename={basename}
@@ -216,7 +217,9 @@ export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
     function handleClick(
       event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
     ) {
+      // 如果有传onClick，那么改onClick
       if (onClick) onClick(event);
+      // 否则如果没有阻止默认行为的话，那么调用internalOnClick
       if (!event.defaultPrevented) {
         internalOnClick(event);
       }
@@ -349,6 +352,7 @@ export function useLinkClickHandler<
 
         // If the URL hasn't changed, a regular <a> will do a replace instead of
         // a push, so do the same here.
+        // 如果有传replace为true或当前location和传入path的`pathname + search + hash`相等，那么replace为true
         const replace =
           !!replaceProp || createPath(location) === createPath(path);
 

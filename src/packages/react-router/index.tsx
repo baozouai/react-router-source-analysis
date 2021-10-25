@@ -281,7 +281,7 @@ export function Router({
     state = null,
     key = "default"
   } = locationProp;
-
+  // 替换传入location的pathname
   const location = React.useMemo(() => {
     // 获取pathname中basename后的字符串
     const trailingPathname = stripBasename(pathname, basename);
@@ -464,7 +464,7 @@ export function useNavigate(): NavigateFunction {
   const routePathnamesJson = JSON.stringify(
     matches.map(match => match.pathnameBase)
   );
-
+  /** 是否已挂载 */
   const activeRef = React.useRef(false);
   React.useEffect(() => {
     activeRef.current = true;
@@ -494,7 +494,7 @@ export function useNavigate(): NavigateFunction {
       if (basename !== "/") {
         path.pathname = joinPaths([basename, path.pathname]);
       }
-
+      // replace为true才调用replace方法，否则都是push
       (!!options.replace ? navigator.replace : navigator.push)(
         path,
         options.state
@@ -531,6 +531,7 @@ export function useParams<Key extends string = string>(): Readonly<
 }
 
 /**
+ * 根据当前location解析给定to的pathname
  * Resolves the pathname of the given `to` value against the current location.
  *
  * @see https://reactrouter.com/api/useResolvedPath
@@ -538,7 +539,7 @@ export function useParams<Key extends string = string>(): Readonly<
 export function useResolvedPath(to: To): Path {
   const { matches } = React.useContext(RouteContext);
   const { pathname: locationPathname } = useLocation();
-
+  // 转为字符串是为了避免memo依赖加上对象导致缓存失效？
   const routePathnamesJson = JSON.stringify(
     matches.map(match => match.pathnameBase)
   );
@@ -613,7 +614,8 @@ export function useRoutes(
   }
   // 一般来说，对于http://localhost:3000/auth，location.pathname为/auth
   const pathname = location.pathname || "/";
-  // parentPathnameBase不为 '/'那么就从pathname中的parentPathnameBase后截取
+  // parentPathnameBase不为 '/'那么就从pathname中的parentPathnameBase后截取。
+  // 因为useRoutes是在<Routes></Routes>中调用的，remainingPathname代表当前Routes的相对路径
   // eg: pathname = `${parentPathnameBase}xxx`，remainingPathname = 'xxx'
   // eg: pathname = `/auth`，remainingPathname = '/'
   // eg: pathname = `/auth/login`，parentPathnameBase = '/auth', remainingPathname = '/login'
@@ -643,7 +645,7 @@ export function useRoutes(
 /**
  * @description 创建一个route配置: 
  * @example
- * {
+ * RouteObject {
  *  caseSensitive?: boolean;
  *  children?: RouteObject[];
  *  element?: React.ReactNode;
@@ -659,7 +661,7 @@ export function useRoutes(
 export function createRoutesFromChildren(
   children: React.ReactNode
 ): RouteObject[] {
-  let routes: RouteObject[] = [];
+  const routes: RouteObject[] = [];
   debugger
   React.Children.forEach(children, element => {
     if (!React.isValidElement(element)) {
@@ -778,7 +780,37 @@ export function matchRoutes(
   }
   // routes有可能是多层设置，那么flatten下
   const branches = flattenRoutes(routes);
-  // 通过score或childrenIndex[]排序branch
+  /**
+   * 通过score或childrenIndex[]排序branch
+   * @example
+   *  // 排序前
+   *  [
+   *  {
+   *   path: '/', score: 4, routesMeta: [
+   *     {relativePath: "",caseSensitive: false,childrenIndex: 0},
+   *     {relativePath: "",caseSensitive: false,childrenIndex: 0}
+   *   ]
+   * },
+   *  {
+   *   path: '/login', score: 13, routesMeta: [
+   *     {relativePath: "",caseSensitive: false,childrenIndex: 0},
+   *     {relativePath: "login",caseSensitive: false,childrenIndex: 1}
+   * ]
+   * },
+   *  {
+   *   path: '/protected', score: 13, routesMeta: [
+   *     {relativePath: "",caseSensitive: false,childrenIndex: 0},
+   *     {relativePath: "protected",caseSensitive: true,childrenIndex: 2}
+   *   ]
+   * }
+   * ]
+   * // 排序后
+   *  [
+   *  { path: '/login', score: 13, ...},
+   *  { path: '/protected', score: 13, ...}
+   *  { path: '/', score: 4, ... },
+   * ]
+   */
   rankRouteBranches(branches);
 
   let matches = null;
@@ -1321,9 +1353,20 @@ function safelyDecodeURIComponent(value: string, paramName: string) {
 }
 
 /**
+ * 
+ * @description
+ * - 如果 `toPathname` 为空，或空字符串，那么直接取 `fromPathname`
+ * - 如果以 `/` 开头，那么直接取 `toPathname`
+ * - 否则是 resolvePathname(toPathname, fromPathname)) 
+ * 
+ * @example
+ * resolvePathname('login', '/auth') => '/auth/login'
+ * 
  * Returns a resolved path object relative to the given pathname.
  *
  * @see https://reactrouter.com/api/resolvePath
+ * 
+ *  src/packages/react-router-dom/__tests__/exports-test.tsx
  */
 export function resolvePath(to: To, fromPathname = "/"): Path {
   const {
@@ -1331,11 +1374,10 @@ export function resolvePath(to: To, fromPathname = "/"): Path {
     search = "",
     hash = ""
   } = typeof to === "string" ? parsePath(to) : to;
-
   const pathname = toPathname
-    ? toPathname.startsWith("/")
+    ? (toPathname.startsWith("/")
       ? toPathname
-      : resolvePathname(toPathname, fromPathname)
+      : resolvePathname(toPathname, fromPathname))
     : fromPathname;
 
   return {
@@ -1344,16 +1386,32 @@ export function resolvePath(to: To, fromPathname = "/"): Path {
     hash: normalizeHash(hash)
   };
 }
-
+/**
+ * @example
+ * resolvePathname('.', '/auth/') => '/auth'
+ * resolvePathname('.', '/auth') => '/auth'
+ * resolvePathname('login', '/auth/') => '/auth/login'
+ * resolvePathname('./login', '/auth/') => '/auth/login'
+ * resolvePathname('../login', '/auth/') => '/login'
+ * resolvePathname('..', '/auth/') => '/'
+ * resolvePathname('../', '/auth/') => '/'
+ * resolvePathname('../../', '/auth/') => '/'
+ */
 function resolvePathname(relativePath: string, fromPathname: string): string {
+  // 去掉尾部的/。eg: '/auth/' => ['', 'auth']
   const segments = fromPathname.replace(/\/+$/, "").split("/");
   const relativeSegments = relativePath.split("/");
 
   relativeSegments.forEach(segment => {
     if (segment === "..") {
+      // eg: 
+      // resolvePathname('../login', '/auth') => '/login'
       // Keep the root "" segment so the pathname starts at /
+      // segments.length <= 1代表 到了 '/'
+      // resolvePathname('../../', '/auth/') => '/'。第一个`..`会起作用，第二个就不会了，因为到这里segments.length = 1
       if (segments.length > 1) segments.pop();
     } else if (segment !== ".") {
+      // .代表当前RouterContext
       segments.push(segment);
     }
   });
@@ -1376,6 +1434,10 @@ function resolveTo(
   // `to` values that do not provide a pathname. `to` can simply be a search or
   // hash string, in which case we should assume that the navigation is relative
   // to the current location's pathname and *not* the route pathname.
+  // 如果在`to`中明确提供了路径名，那么它应该是相对于RouterContext的。这在v5的`Note on `<Link to>` values`中作了解释，
+  // 目的是为了消除是否以'/'开头的`to`的歧义。
+  // 然而，对于不提供路径名的`to`值来说，这是有问题的。
+  // 因为`to`可以是一个search或hash，在这种情况下，我们应该假设navigation是相对于当前location的pathname，而不是route pathname
   let from: string;
   if (toPathname == null) {
     from = locationPathname;
@@ -1383,8 +1445,9 @@ function resolveTo(
     let routePathnameIndex = routePathnames.length - 1;
 
     if (toPathname.startsWith("..")) {
+      // 如果toPathname以..开头，如../login,那么toSegments = ['..','login']
       const toSegments = toPathname.split("/");
-
+      // ..代表回溯到上一个route，而不是URL片段，这个和a 'href'不同
       // Each leading .. segment means "go up one route" instead of "go up one
       // URL segment".  This is a key difference from how <a href> works and a
       // major reason we call this a "to" value instead of a "href".
@@ -1398,6 +1461,7 @@ function resolveTo(
 
     // If there are more ".." segments than parent routes, resolve relative to
     // the root / URL.
+    // 如果m ".."片段超过了 parent routes，那么from相对于 '/'
     from = routePathnameIndex >= 0 ? routePathnames[routePathnameIndex] : "/";
   }
 
@@ -1410,6 +1474,7 @@ function resolveTo(
     toPathname.endsWith("/") &&
     !path.pathname.endsWith("/")
   ) {
+    // 如果toPathname以/结尾但不等于/，且resolvePath后得到的path.pathname不以/结尾，那么path.pathname要以/结尾
     path.pathname += "/";
   }
 

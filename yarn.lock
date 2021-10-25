@@ -259,6 +259,17 @@
     "@babel/helper-validator-identifier" "^7.14.9"
     to-fast-properties "^2.0.0"
 
+"@jest/types@^27.2.5":
+  version "27.2.5"
+  resolved "https://registry.npmmirror.com/@jest/types/download/@jest/types-27.2.5.tgz#420765c052605e75686982d24b061b4cbba22132"
+  integrity sha1-QgdlwFJgXnVoaYLSSwYbTLuiITI=
+  dependencies:
+    "@types/istanbul-lib-coverage" "^2.0.0"
+    "@types/istanbul-reports" "^3.0.0"
+    "@types/node" "*"
+    "@types/yargs" "^16.0.0"
+    chalk "^4.0.0"
+
 "@reach/dialog@^0.16.2":
   version "0.16.2"
   resolved "https://registry.npmmirror.com/@reach/dialog/download/@reach/dialog-0.16.2.tgz#567e6f59d0a6dabe84b2ba4c456404efa6cb7d03"
@@ -304,6 +315,38 @@
     estree-walker "^2.0.1"
     picomatch "^2.2.2"
 
+"@types/istanbul-lib-coverage@*", "@types/istanbul-lib-coverage@^2.0.0":
+  version "2.0.3"
+  resolved "https://registry.nlark.com/@types/istanbul-lib-coverage/download/@types/istanbul-lib-coverage-2.0.3.tgz#4ba8ddb720221f432e443bd5f9117fd22cfd4762"
+  integrity sha1-S6jdtyAiH0MuRDvV+RF/0iz9R2I=
+
+"@types/istanbul-lib-report@*":
+  version "3.0.0"
+  resolved "https://registry.nlark.com/@types/istanbul-lib-report/download/@types/istanbul-lib-report-3.0.0.tgz?cache=0&sync_timestamp=1629708072640&other_urls=https%3A%2F%2Fregistry.nlark.com%2F%40types%2Fistanbul-lib-report%2Fdownload%2F%40types%2Fistanbul-lib-report-3.0.0.tgz#c14c24f18ea8190c118ee7562b7ff99a36552686"
+  integrity sha1-wUwk8Y6oGQwRjudWK3/5mjZVJoY=
+  dependencies:
+    "@types/istanbul-lib-coverage" "*"
+
+"@types/istanbul-reports@^3.0.0":
+  version "3.0.1"
+  resolved "https://registry.nlark.com/@types/istanbul-reports/download/@types/istanbul-reports-3.0.1.tgz?cache=0&other_urls=https%3A%2F%2Fregistry.nlark.com%2F%40types%2Fistanbul-reports%2Fdownload%2F%40types%2Fistanbul-reports-3.0.1.tgz#9153fe98bba2bd565a63add9436d6f0d7f8468ff"
+  integrity sha1-kVP+mLuivVZaY63ZQ21vDX+EaP8=
+  dependencies:
+    "@types/istanbul-lib-report" "*"
+
+"@types/jest@^27.0.2":
+  version "27.0.2"
+  resolved "https://registry.nlark.com/@types/jest/download/@types/jest-27.0.2.tgz#ac383c4d4aaddd29bbf2b916d8d105c304a5fcd7"
+  integrity sha1-rDg8TUqt3Sm78rkW2NEFwwSl/Nc=
+  dependencies:
+    jest-diff "^27.0.0"
+    pretty-format "^27.0.0"
+
+"@types/node@*":
+  version "16.11.4"
+  resolved "https://registry.npmmirror.com/@types/node/download/@types/node-16.11.4.tgz#90771124822d6663814f7c1c9b45a6654d8fd964"
+  integrity sha1-kHcRJIItZmOBT3wcm0WmZU2P2WQ=
+
 "@types/prop-types@*":
   version "15.7.4"
   resolved "https://registry.nlark.com/@types/prop-types/download/@types/prop-types-15.7.4.tgz?cache=0&sync_timestamp=1629708829833&other_urls=https%3A%2F%2Fregistry.nlark.com%2F%40types%2Fprop-types%2Fdownload%2F%40types%2Fprop-types-15.7.4.tgz#fcf7205c25dff795ee79af1e30da2c9790808f11"
@@ -313,6 +356,13 @@
   version "17.0.9"
   resolved "https://registry.nlark.com/@types/react-dom/download/@types/react-dom-17.0.9.tgz#441a981da9d7be117042e1a6fd3dac4b30f55add"
   integrity sha1-RBqYHanXvhFwQuGm/T2sSzD1Wt0=
+  dependencies:
+    "@types/react" "*"
+
+"@types/react-test-renderer@^17.0.1":
+  version "17.0.1"
+  resolved "https://registry.nlark.com/@types/react-test-renderer/download/@types/react-test-renderer-17.0.1.tgz#3120f7d1c157fba9df0118dae20cb0297ee0e06b"
+  integrity sha1-MSD30cFX+6nfARja4gywKX7g4Gs=
   dependencies:
     "@types/react" "*"
 
@@ -330,6 +380,18 @@
   resolved "https://registry.nlark.com/@types/scheduler/download/@types/scheduler-0.16.2.tgz?cache=0&sync_timestamp=1629709152024&other_urls=https%3A%2F%2Fregistry.nlark.com%2F%40types%2Fscheduler%2Fdownload%2F%40types%2Fscheduler-0.16.2.tgz#1a62f89525723dde24ba1b01b092bf5df8ad4d39"
   integrity sha1-GmL4lSVyPd4kuhsBsJK/XfitTTk=
 
+"@types/yargs-parser@*":
+  version "20.2.1"
+  resolved "https://registry.nlark.com/@types/yargs-parser/download/@types/yargs-parser-20.2.1.tgz?cache=0&sync_timestamp=1629709781719&other_urls=https%3A%2F%2Fregistry.nlark.com%2F%40types%2Fyargs-parser%2Fdownload%2F%40types%2Fyargs-parser-20.2.1.tgz#3b9ce2489919d9e4fea439b76916abc34b2df129"
+  integrity sha1-O5ziSJkZ2eT+pDm3aRarw0st8Sk=
+
+"@types/yargs@^16.0.0":
+  version "16.0.4"
+  resolved "https://registry.npmmirror.com/@types/yargs/download/@types/yargs-16.0.4.tgz#26aad98dd2c2a38e421086ea9ad42b9e51642977"
+  integrity sha1-JqrZjdLCo45CEIbqmtQrnlFkKXc=
+  dependencies:
+    "@types/yargs-parser" "*"
+
 "@vitejs/plugin-react@^1.0.0":
   version "1.0.5"
   resolved "https://registry.npmmirror.com/@vitejs/plugin-react/download/@vitejs/plugin-react-1.0.5.tgz#8da501137078c8cb791cf2611f23de7b96ad5494"
@@ -344,12 +406,29 @@
     react-refresh "^0.10.0"
     resolve "^1.20.0"
 
+ansi-regex@^5.0.1:
+  version "5.0.1"
+  resolved "https://registry.nlark.com/ansi-regex/download/ansi-regex-5.0.1.tgz?cache=0&sync_timestamp=1631634988487&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fansi-regex%2Fdownload%2Fansi-regex-5.0.1.tgz#082cb2c89c9fe8659a311a53bd6a4dc5301db304"
+  integrity sha1-CCyyyJyf6GWaMRpTvWpNxTAdswQ=
+
 ansi-styles@^3.2.1:
   version "3.2.1"
   resolved "https://registry.nlark.com/ansi-styles/download/ansi-styles-3.2.1.tgz#41fbb20243e50b12be0f04b8dedbf07520ce841d"
   integrity sha1-QfuyAkPlCxK+DwS43tvwdSDOhB0=
   dependencies:
     color-convert "^1.9.0"
+
+ansi-styles@^4.1.0:
+  version "4.3.0"
+  resolved "https://registry.nlark.com/ansi-styles/download/ansi-styles-4.3.0.tgz#edd803628ae71c04c85ae7a0906edad34b648937"
+  integrity sha1-7dgDYornHATIWuegkG7a00tkiTc=
+  dependencies:
+    color-convert "^2.0.1"
+
+ansi-styles@^5.0.0:
+  version "5.2.0"
+  resolved "https://registry.nlark.com/ansi-styles/download/ansi-styles-5.2.0.tgz#07449690ad45777d1924ac2abb2fc8895dba836b"
+  integrity sha1-B0SWkK1Fd30ZJKwquy/IiV26g2s=
 
 browserslist@^4.16.6:
   version "4.17.4"
@@ -376,6 +455,14 @@ chalk@^2.0.0:
     escape-string-regexp "^1.0.5"
     supports-color "^5.3.0"
 
+chalk@^4.0.0:
+  version "4.1.2"
+  resolved "https://registry.nlark.com/chalk/download/chalk-4.1.2.tgz?cache=0&sync_timestamp=1627646697260&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fchalk%2Fdownload%2Fchalk-4.1.2.tgz#aac4e2b7734a740867aeb16bf02aad556a1e7a01"
+  integrity sha1-qsTit3NKdAhnrrFr8CqtVWoeegE=
+  dependencies:
+    ansi-styles "^4.1.0"
+    supports-color "^7.1.0"
+
 color-convert@^1.9.0:
   version "1.9.3"
   resolved "https://registry.npm.taobao.org/color-convert/download/color-convert-1.9.3.tgz#bb71850690e1f136567de629d2d5471deda4c1e8"
@@ -383,10 +470,22 @@ color-convert@^1.9.0:
   dependencies:
     color-name "1.1.3"
 
+color-convert@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.npm.taobao.org/color-convert/download/color-convert-2.0.1.tgz#72d3a68d598c9bdb3af2ad1e84f21d896abd4de3"
+  integrity sha1-ctOmjVmMm9s68q0ehPIdiWq9TeM=
+  dependencies:
+    color-name "~1.1.4"
+
 color-name@1.1.3:
   version "1.1.3"
   resolved "https://registry.npm.taobao.org/color-name/download/color-name-1.1.3.tgz#a7d0558bd89c42f795dd42328f740831ca53bc25"
   integrity sha1-p9BVi9icQveV3UIyj3QIMcpTvCU=
+
+color-name@~1.1.4:
+  version "1.1.4"
+  resolved "https://registry.npm.taobao.org/color-name/download/color-name-1.1.4.tgz#c2a09a87acbde69543de6f63fa3995c826c536a2"
+  integrity sha1-wqCah6y95pVD3m9j+jmVyCbFNqI=
 
 convert-source-map@^1.7.0:
   version "1.8.0"
@@ -411,6 +510,11 @@ detect-node-es@^1.1.0:
   version "1.1.0"
   resolved "https://registry.npm.taobao.org/detect-node-es/download/detect-node-es-1.1.0.tgz?cache=0&sync_timestamp=1616030315514&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fdetect-node-es%2Fdownload%2Fdetect-node-es-1.1.0.tgz#163acdf643330caa0b4cd7c21e7ee7755d6fa493"
   integrity sha1-FjrN9kMzDKoLTNfCHn7ndV1vpJM=
+
+diff-sequences@^27.0.6:
+  version "27.0.6"
+  resolved "https://registry.nlark.com/diff-sequences/download/diff-sequences-27.0.6.tgz?cache=0&sync_timestamp=1624900057366&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fdiff-sequences%2Fdownload%2Fdiff-sequences-27.0.6.tgz#3305cb2e55a033924054695cc66019fd7f8e5723"
+  integrity sha1-MwXLLlWgM5JAVGlcxmAZ/X+OVyM=
 
 electron-to-chromium@^1.3.867:
   version "1.3.873"
@@ -577,6 +681,11 @@ has-flag@^3.0.0:
   resolved "https://registry.nlark.com/has-flag/download/has-flag-3.0.0.tgz#b5d454dc2199ae225699f3467e5a07f3b955bafd"
   integrity sha1-tdRU3CGZriJWmfNGfloH87lVuv0=
 
+has-flag@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.nlark.com/has-flag/download/has-flag-4.0.0.tgz#944771fd9c81c81265c4d6941860da06bb59479b"
+  integrity sha1-lEdx/ZyByBJlxNaUGGDaBrtZR5s=
+
 has@^1.0.3:
   version "1.0.3"
   resolved "https://registry.nlark.com/has/download/has-1.0.3.tgz#722d7cbfc1f6aa8241f16dd814e011e1f41e8796"
@@ -597,6 +706,21 @@ is-core-module@^2.2.0:
   integrity sha1-AyEzbD0JJeSX/Zf12VyxFKXM1Ug=
   dependencies:
     has "^1.0.3"
+
+jest-diff@^27.0.0:
+  version "27.3.1"
+  resolved "https://registry.npmmirror.com/jest-diff/download/jest-diff-27.3.1.tgz?cache=0&sync_timestamp=1634626740654&other_urls=https%3A%2F%2Fregistry.npmmirror.com%2Fjest-diff%2Fdownload%2Fjest-diff-27.3.1.tgz#d2775fea15411f5f5aeda2a5e02c2f36440f6d55"
+  integrity sha1-0ndf6hVBH19a7aKl4CwvNkQPbVU=
+  dependencies:
+    chalk "^4.0.0"
+    diff-sequences "^27.0.6"
+    jest-get-type "^27.3.1"
+    pretty-format "^27.3.1"
+
+jest-get-type@^27.3.1:
+  version "27.3.1"
+  resolved "https://registry.npmmirror.com/jest-get-type/download/jest-get-type-27.3.1.tgz?cache=0&sync_timestamp=1634626733231&other_urls=https%3A%2F%2Fregistry.npmmirror.com%2Fjest-get-type%2Fdownload%2Fjest-get-type-27.3.1.tgz#a8a2b0a12b50169773099eee60a0e6dd11423eff"
+  integrity sha1-qKKwoStQFpdzCZ7uYKDm3RFCPv8=
 
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
@@ -676,6 +800,16 @@ postcss@^8.3.8:
     picocolors "^0.2.1"
     source-map-js "^0.6.2"
 
+pretty-format@^27.0.0, pretty-format@^27.3.1:
+  version "27.3.1"
+  resolved "https://registry.npmmirror.com/pretty-format/download/pretty-format-27.3.1.tgz?cache=0&sync_timestamp=1634626739813&other_urls=https%3A%2F%2Fregistry.npmmirror.com%2Fpretty-format%2Fdownload%2Fpretty-format-27.3.1.tgz#7e9486365ccdd4a502061fa761d3ab9ca1b78df5"
+  integrity sha1-fpSGNlzN1KUCBh+nYdOrnKG3jfU=
+  dependencies:
+    "@jest/types" "^27.2.5"
+    ansi-regex "^5.0.1"
+    ansi-styles "^5.0.0"
+    react-is "^17.0.1"
+
 prop-types@^15.6.2, prop-types@^15.7.2:
   version "15.7.2"
   resolved "https://registry.nlark.com/prop-types/download/prop-types-15.7.2.tgz#52c41e75b8c87e72b9d9360e0206b99dcbffa6c5"
@@ -713,6 +847,11 @@ react-focus-lock@^2.5.2:
     use-callback-ref "^1.2.5"
     use-sidecar "^1.0.5"
 
+"react-is@^16.12.0 || ^17.0.0", react-is@^17.0.1, react-is@^17.0.2:
+  version "17.0.2"
+  resolved "https://registry.npmmirror.com/react-is/download/react-is-17.0.2.tgz?cache=0&sync_timestamp=1634892262743&other_urls=https%3A%2F%2Fregistry.npmmirror.com%2Freact-is%2Fdownload%2Freact-is-17.0.2.tgz#e691d4a8e9c789365655539ab372762b0efb54f0"
+  integrity sha1-5pHUqOnHiTZWVVOas3J2Kw77VPA=
+
 react-is@^16.8.1:
   version "16.13.1"
   resolved "https://registry.npmmirror.com/react-is/download/react-is-16.13.1.tgz?cache=0&sync_timestamp=1634679661038&other_urls=https%3A%2F%2Fregistry.npmmirror.com%2Freact-is%2Fdownload%2Freact-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
@@ -742,6 +881,14 @@ react-remove-scroll@^2.4.3:
     use-callback-ref "^1.2.3"
     use-sidecar "^1.0.1"
 
+react-shallow-renderer@^16.13.1:
+  version "16.14.1"
+  resolved "https://registry.npm.taobao.org/react-shallow-renderer/download/react-shallow-renderer-16.14.1.tgz#bf0d02df8a519a558fd9b8215442efa5c840e124"
+  integrity sha1-vw0C34pRmlWP2bghVELvpchA4SQ=
+  dependencies:
+    object-assign "^4.1.1"
+    react-is "^16.12.0 || ^17.0.0"
+
 react-style-singleton@^2.1.0:
   version "2.1.1"
   resolved "https://registry.npm.taobao.org/react-style-singleton/download/react-style-singleton-2.1.1.tgz#ce7f90b67618be2b6b94902a30aaea152ce52e66"
@@ -750,6 +897,16 @@ react-style-singleton@^2.1.0:
     get-nonce "^1.0.0"
     invariant "^2.2.4"
     tslib "^1.0.0"
+
+react-test-renderer@^17.0.2:
+  version "17.0.2"
+  resolved "https://registry.npmmirror.com/react-test-renderer/download/react-test-renderer-17.0.2.tgz?cache=0&sync_timestamp=1634744001913&other_urls=https%3A%2F%2Fregistry.npmmirror.com%2Freact-test-renderer%2Fdownload%2Freact-test-renderer-17.0.2.tgz#4cd4ae5ef1ad5670fc0ef776e8cc7e1231d9866c"
+  integrity sha1-TNSuXvGtVnD8Dvd26Mx+EjHZhmw=
+  dependencies:
+    object-assign "^4.1.1"
+    react-is "^17.0.2"
+    react-shallow-renderer "^16.13.1"
+    scheduler "^0.20.2"
 
 react@^17.0.0:
   version "17.0.2"
@@ -813,6 +970,13 @@ supports-color@^5.3.0:
   integrity sha1-4uaaRKyHcveKHsCzW2id9lMO/I8=
   dependencies:
     has-flag "^3.0.0"
+
+supports-color@^7.1.0:
+  version "7.2.0"
+  resolved "https://registry.nlark.com/supports-color/download/supports-color-7.2.0.tgz?cache=0&sync_timestamp=1626703414084&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fsupports-color%2Fdownload%2Fsupports-color-7.2.0.tgz#1b7dcdcb32b8138801b3e478ba6a51caa89648da"
+  integrity sha1-G33NyzK4E4gBs+R4umpRyqiWSNo=
+  dependencies:
+    has-flag "^4.0.0"
 
 tiny-warning@^1.0.3:
   version "1.0.3"
