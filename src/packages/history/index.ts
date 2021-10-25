@@ -379,6 +379,7 @@ export function createBrowserHistory(
   let blockedPopTx: Transition | null = null;
   /** popstate的回调 */
   function handlePop() {
+    debugger
     if (blockedPopTx) {
       // 如果参数有值，那么将参数传给blockers中的handlers
       blockers.call(blockedPopTx);
@@ -491,10 +492,10 @@ export function createBrowserHistory(
       !blockers.length || (blockers.call({ action, location, retry }), false)
     );
   }
-  /** 执行所有的listener */
+  /** blocker为空才执行所有的listener, handlePop、push、replace都会调用 */
   function applyTx(nextAction: Action) {
     action = nextAction;
-  //  获取新的index和location
+  //  获取当前index和location
     [index, location] = getIndexAndLocation();
     listeners.call({ action, location });
   }
@@ -1087,8 +1088,14 @@ export function createPath({
  *   "search": "?utm_source=gold_browser_extension",
  *   "pathname": "https://juejin.cn/post/7005725282363506701"
  * }
- * 
  * 从结果可看到，去掉 `hash` 、 `search` 就是 `pathname` 了
+ * 
+ * parsePath('?utm_source=gold_browser_extension#heading-2')
+ * {
+ *   "hash": "#heading-2",
+ *   "search": "?utm_source=gold_browser_extension",
+ * }
+ * 而如果只有search和hash，那么parse完也没有pathname，这里要特别注意
  * 
  * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#parsepath
  */
