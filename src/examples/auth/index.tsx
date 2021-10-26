@@ -71,25 +71,25 @@ interface AuthContextType {
   signout: (callback: VoidFunction) => void;
 }
 
-let AuthContext = React.createContext<AuthContextType>(null!);
+const AuthContext = React.createContext<AuthContextType>(null!);
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
-  let [user, setUser] = React.useState<any>(null);
-  let signin = (newUser: string, callback: VoidFunction) => {
+  const [user, setUser] = React.useState<any>(null);
+  const signin = (newUser: string, callback: VoidFunction) => {
     return fakeAuthProvider.signin(() => {
       setUser(newUser);
       callback();
     });
   };
 
-  let signout = (callback: VoidFunction) => {
+  const signout = (callback: VoidFunction) => {
     return fakeAuthProvider.signout(() => {
       setUser(null);
       callback();
     });
   };
 
-  let value = { user, signin, signout };
+  const value = { user, signin, signout };
   debugger
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
@@ -99,8 +99,8 @@ function useAuth() {
 }
 
 function AuthStatus() {
-  let auth = useAuth();
-  let navigate = useNavigate();
+  const auth = useAuth();
+  const navigate = useNavigate();
 
   if (!auth.user) {
     return <p>You are not logged in.</p>;
@@ -121,8 +121,8 @@ function AuthStatus() {
 }
 
 function RequireAuth({ children }: { children: JSX.Element }) {
-  let auth = useAuth();
-  let location = useLocation();
+  const auth = useAuth();
+  const location = useLocation();
 
   if (!auth.user) {
     // Redirect them to the /login page, but save the current location they were
@@ -136,18 +136,18 @@ function RequireAuth({ children }: { children: JSX.Element }) {
 }
 
 function LoginPage() {
-  let navigate = useNavigate();
-  let location = useLocation();
-  let auth = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const auth = useAuth();
 
-  let state = location.state as { from: Location };
-  let from = state ? state.from.pathname : "/";
+  const state = location.state as { from: Location };
+  const from = state ? state.from.pathname : "/";
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    let formData = new FormData(event.currentTarget);
-    let username = formData.get("username") as string;
+    const formData = new FormData(event.currentTarget);
+    const username = formData.get("username") as string;
 
     auth.signin(username, () => {
       // Send them back to the page they tried to visit when they were
@@ -175,7 +175,6 @@ function LoginPage() {
 }
 
 function PublicPage() {
-  debugger
   return <h3>Public</h3>;
 }
 

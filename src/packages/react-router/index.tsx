@@ -727,6 +727,12 @@ export interface RouteObject {
 /**
  * Returns a path with params interpolated.
  *
+ * @example
+ * generatePath("/users/:id", { id: 42 }); // "/users/42"
+ * generatePath("/files/:type/*", {
+ * type: "img",
+ * "*": "cat.jpg"
+ * }); // "/files/img/cat.jpg"
  * @see https://reactrouter.com/api/generatePath
  */
 export function generatePath(path: string, params: Params = {}): string {

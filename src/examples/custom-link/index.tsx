@@ -1,4 +1,3 @@
-import * as React from "react";
 import {
   Routes,
   Route,
@@ -45,8 +44,8 @@ function Layout() {
 }
 
 function CustomLink({ children, to, ...props }: LinkProps) {
-  let resolved = useResolvedPath(to);
-  let match = useMatch({
+  const resolved = useResolvedPath(to);
+  const match = useMatch({
     path: resolved.pathname,
     end: true
   });

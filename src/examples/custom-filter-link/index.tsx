@@ -53,8 +53,8 @@ function Layout() {
 }
 
 function SneakerGrid() {
-  let [searchParams] = useSearchParams();
-  let brand = searchParams.get("brand");
+  const [searchParams] = useSearchParams();
+  const brand = searchParams.get("brand");
 
   const sneakers = React.useMemo(() => {
     if (!brand) return SNEAKERS;
@@ -73,7 +73,7 @@ function SneakerGrid() {
         }}
       >
         {sneakers.map(snkr => {
-          let name = `${snkr.brand} ${snkr.model} ${snkr.colorway}`;
+          const name = `${snkr.brand} ${snkr.model} ${snkr.colorway}`;
           return (
             <div key={snkr.id} style={{ position: "relative" }}>
               <img
@@ -110,8 +110,8 @@ interface BrandLinkProps extends Omit<LinkProps, "to"> {
 }
 
 const BrandLink: React.FC<BrandLinkProps> = ({ brand, children, ...props }) => {
-  let [searchParams] = useSearchParams();
-  let isActive = searchParams.get("brand") === brand;
+  const [searchParams] = useSearchParams();
+  const isActive = searchParams.get("brand") === brand;
 
   return (
     <Link
@@ -128,19 +128,19 @@ const BrandLink: React.FC<BrandLinkProps> = ({ brand, children, ...props }) => {
 };
 
 function SneakerView() {
-  let { id } = useParams<"id">();
+  const { id } = useParams<"id">();
 
   if (!id) {
     return <NoMatch />;
   }
 
-  let snkr = getSneakerById(id);
+  const snkr = getSneakerById(id);
 
   if (!snkr) {
     return <NoMatch />;
   }
 
-  let name = `${snkr.brand} ${snkr.model} ${snkr.colorway}`;
+  const name = `${snkr.brand} ${snkr.model} ${snkr.colorway}`;
 
   return (
     <div>
