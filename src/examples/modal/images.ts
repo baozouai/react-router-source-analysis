@@ -1,4 +1,4 @@
-let IMAGES = [
+const IMAGES = [
   {
     id: 0,
     title: "Enjoying a cup of coffee",

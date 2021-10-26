@@ -11,14 +11,14 @@ import SSR from './examples/ssr'
 import UseRoutes from './examples/use-routes'
 import './App.css'
 const routeConfigs = [
-  {
-    path: 'auth',
-    Element: Auth,
-  },
   // {
-  //   path: 'basic',
-  //   Element: Basic,
+  //   path: 'auth',
+  //   Element: Auth,
   // },
+  {
+    path: 'basic',
+    Element: Basic,
+  },
   // {
   //   path: 'customer-filter-link',
   //   Element: CustomFilterLink,

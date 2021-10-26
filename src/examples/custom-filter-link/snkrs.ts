@@ -6,7 +6,7 @@ interface Sneaker {
   brand: string;
 }
 
-let SNEAKERS: Sneaker[] = [
+const SNEAKERS: Sneaker[] = [
   {
     id: "1",
     colorway: "Pine Green",
@@ -75,6 +75,6 @@ function getSneakerById(id: string) {
   return SNEAKERS.find(sneaker => sneaker.id === id);
 }
 
-let brands = [...new Set(SNEAKERS.map(sneaker => sneaker.brand))];
+const brands = [...new Set(SNEAKERS.map(sneaker => sneaker.brand))];
 
 export { brands, SNEAKERS, filterByBrand, getSneakerById };
