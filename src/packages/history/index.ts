@@ -197,6 +197,8 @@ export interface History<S extends State = State> {
   readonly location: Location<S>;
 
   /**
+   * 返回一个新的href, to为string则返回to，否则返回 `createPath(to)`
+   * 
    * Returns a valid href for the given `to` value that may be used as
    * the value of an <a href> attribute.
    *
@@ -450,7 +452,7 @@ export function createBrowserHistory(
     // 这里replaceState后，history.state.idx就为0了
     globalHistory.replaceState({ ...globalHistory.state, idx: index }, '');
   }
-  /** 返回一个新的href */
+  /** 返回一个新的href, to为string则返回to，否则返回 `createPath(to)` */
   function createHref(to: To) {
     return typeof to === 'string' ? to : createPath(to);
   }
@@ -1076,6 +1078,11 @@ export function createPath({
   hash = ''
 }: PartialPath) {
   return pathname + search + hash;
+  // 这里是否需要去掉尾部的'/' ?? 
+  // eg: pathname = '/basic/' search = '', hash = ''
+  // pathname + search + hash = '/basic/'
+  // (pathname + search + hash).replace(/\/$/, '') = '/basic'
+  // return (pathname + search + hash).replace(/\/$/, '');
 }
 
 /**
@@ -1095,6 +1102,7 @@ export function createPath({
  *   "hash": "#heading-2",
  *   "search": "?utm_source=gold_browser_extension",
  * }
+ * parsePath('') => {}
  * 而如果只有search和hash，那么parse完也没有pathname，这里要特别注意
  * 
  * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#parsepath

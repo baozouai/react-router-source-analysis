@@ -11,10 +11,10 @@ import SSR from './examples/ssr'
 import UseRoutes from './examples/use-routes'
 import './App.css'
 const routeConfigs = [
-  // {
-  //   path: 'auth',
-  //   Element: Auth,
-  // },
+  {
+    path: 'auth',
+    Element: Auth,
+  },
   {
     path: 'basic',
     Element: Basic,
@@ -67,7 +67,7 @@ function App() {
   debugger
   return (
     <Routes>
-      <Route path="/" element={<Layout />}>
+      <Route path='/' element={<Layout />}>
         {
           routeConfigs.map(({ path, Element }) => <Route key={path} path={`${path}/*`} element={<Element />} />)
         }
