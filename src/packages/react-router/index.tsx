@@ -62,7 +62,7 @@ interface NavigationContextObject {
   navigator: Navigator;
   static: boolean;
 }
-
+/** navigation上下文，可以拿到navigator，也就是history */
 const NavigationContext = React.createContext<NavigationContextObject>(null!);
 
 
@@ -70,7 +70,7 @@ interface LocationContextObject {
   action: Action;
   location: Location;
 }
-
+/** location上下文，可以拿到location; 如http://localhost:3000/basic => location = '/basic' */
 const LocationContext = React.createContext<LocationContextObject>(null!);
 
 
@@ -78,7 +78,7 @@ interface RouteContextObject {
   outlet: React.ReactElement | null;
   matches: RouteMatch[];
 }
-
+/** 在`_renderMatches`中会用到，`react-router-dom`中的`useOutlet`可得到最近Context的`outlet` */
 const RouteContext = React.createContext<RouteContextObject>({
   outlet: null,
   matches: []
@@ -138,6 +138,8 @@ export interface NavigateProps {
 }
 
 /**
+ * @description 用于改变当前location, 比较常用于class组件中，会在useEffect后navigate到对应的to。函数组件建议用`useNavigate`
+ * 
  * Changes the current location.
  *
  * Note: This API is mostly useful in React.Component subclasses that are not
@@ -172,6 +174,8 @@ export function Navigate({ to, replace, state }: NavigateProps): null {
 export interface OutletProps {}
 
 /**
+ * @description 渲染匹配到子路由的element
+ * 
  * Renders the child route's element, if there is one.
  *
  * @see https://reactrouter.com/api/Outlet
@@ -216,6 +220,8 @@ export interface IndexRouteProps {
 }
 
 /**
+ * @description 实质上不渲染，至少用于收集Route的props
+ * 
  * Declares an element that should be rendered at a certain URL path.
  *
  * @see https://reactrouter.com/api/Route
@@ -247,6 +253,8 @@ export interface RouterProps {
  * router that is more specific to your environment such as a <BrowserRouter>
  * in web browsers or a <StaticRouter> for server rendering.
  *
+ * 注意：一般不直接渲染<Router>，而是具体环境的router，如浏览器环境的<BrowserRouter>，也就是说这个一般是内部使用的
+ * 
  * @see https://reactrouter.com/api/Router
  */
 export function Router({
@@ -444,6 +452,8 @@ export interface NavigateOptions {
 }
 
 /**
+ * @description 获取navigate方法
+ * 
  * Returns an imperative method for changing the location. Used by <Link>s, but
  * may also be used by other elements to change the location.
  *
@@ -460,7 +470,7 @@ export function useNavigate(): NavigateFunction {
   const { basename, navigator } = React.useContext(NavigationContext);
   const { matches } = React.useContext(RouteContext);
   const { pathname: locationPathname } = useLocation();
-
+  // stringgify是为了下面的memo？？
   const routePathnamesJson = JSON.stringify(
     matches.map(match => match.pathnameBase)
   );
@@ -507,6 +517,8 @@ export function useNavigate(): NavigateFunction {
 }
 
 /**
+ * @description 返回最近一层RouteContext.outlet, 用于`<Outlet/>` 中
+ * 
  * Returns the element for the child route at this level of the route
  * hierarchy. Used internally by <Outlet> to render child routes.
  *
@@ -517,6 +529,8 @@ export function useOutlet(): React.ReactElement | null {
 }
 
 /**
+ * @description 获取params 
+ * 
  * Returns an object of key/value pairs of the dynamic params from the current
  * URL that were matched by the route path.
  *
@@ -531,7 +545,8 @@ export function useParams<Key extends string = string>(): Readonly<
 }
 
 /**
- * 根据当前location解析给定to的pathname
+ * 根据当前`location`以及所处`RouteContext`的`matches`解析给定`to`的`pathname`
+ * 
  * Resolves the pathname of the given `to` value against the current location.
  *
  * @see https://reactrouter.com/api/useResolvedPath
@@ -769,6 +784,8 @@ export interface RouteMatch<ParamKey extends string = string> {
 }
 
 /**
+ * @description 根据`location`对应的`routes`，获取对应的`RouteMatch<string>[]`
+ * 
  * Matches the given routes to a location and returns the match data.
  */
 export function matchRoutes(
@@ -939,6 +956,7 @@ function flattenRoutes(
 
   return branches;
 }
+/** 比较`childIndex`，目的是为了排序 `RouteBranch` */
 function compareIndexes(a: number[], b: number[]): number {
   // slice(0, -1)是获取【除最后一个】的前面元素(parents route)
   // 这里叫siblings是因为最后一个是该 route的index，parent route都在前面，
@@ -1074,7 +1092,7 @@ export function renderMatches(
 ): React.ReactElement | null {
   return _renderMatches(matches);
 }
-
+/** 根据matches渲染出嵌套的 `<RouteContext.Provider></RouteContext.Provider>`*/
 function _renderMatches(
   matches: RouteMatch[] | null,
   parentMatches: RouteMatch[] = []
@@ -1168,6 +1186,8 @@ type Mutable<T> = {
 };
 
 /**
+ * @description 对pathname执行对应的正则匹配，看是否能返回match的信息
+ * 
  * Performs pattern matching on a URL pathname and returns information about
  * the match.
  *
@@ -1363,7 +1383,7 @@ function safelyDecodeURIComponent(value: string, paramName: string) {
  * @description
  * - 如果 `toPathname` 为空，或空字符串，那么直接取 `fromPathname`
  * - 如果以 `/` 开头，那么直接取 `toPathname`
- * - 否则是 resolvePathname(toPathname, fromPathname)) 
+ * - 否则是 resolvePathname(toPathname, fromPathname)
  * 
  * @example
  * resolvePathname('login', '/auth') => '/auth/login'
@@ -1372,7 +1392,6 @@ function safelyDecodeURIComponent(value: string, paramName: string) {
  *
  * @see https://reactrouter.com/api/resolvePath
  * 
- *  src/packages/react-router-dom/__tests__/exports-test.tsx
  */
 export function resolvePath(to: To, fromPathname = "/"): Path {
   const {
@@ -1402,9 +1421,12 @@ export function resolvePath(to: To, fromPathname = "/"): Path {
  * resolvePathname('..', '/auth/') => '/'
  * resolvePathname('../', '/auth/') => '/'
  * resolvePathname('../../', '/auth/') => '/'
+ * resolvePathname('auth', '/') => '/auth'
  */
 function resolvePathname(relativePath: string, fromPathname: string): string {
-  // 去掉尾部的/。eg: '/auth/' => ['', 'auth']
+  // 去掉尾部的/。
+  // eg: '/auth/' => ['', 'auth']
+  // eg: '/' => ['']
   const segments = fromPathname.replace(/\/+$/, "").split("/");
   const relativeSegments = relativePath.split("/");
 
@@ -1430,7 +1452,9 @@ function resolveTo(
   routePathnames: string[],
   locationPathname: string
 ): Path {
+  // parsePath('') => {}
   const to = typeof toArg === "string" ? parsePath(toArg) : toArg;
+  // 如果toArg为空字符或仅包含hash或search,那么parsePath后得到的pathname为空字符串,所以下面才会判断to.pathname === ""
   const toPathname = toArg === "" || to.pathname === "" ? "/" : to.pathname;
 
   // If a pathname is explicitly provided in `to`, it should be relative to the
@@ -1440,16 +1464,19 @@ function resolveTo(
   // `to` values that do not provide a pathname. `to` can simply be a search or
   // hash string, in which case we should assume that the navigation is relative
   // to the current location's pathname and *not* the route pathname.
-  // 如果在`to`中明确提供了路径名，那么它应该是相对于RouterContext的。这在v5的`Note on `<Link to>` values`中作了解释，
+  // 如果在`to`中明确提供了pathname，那么它应该是相对于RouterContext的。这在v5的`Note on `<Link to>` values`中作了解释，
   // 目的是为了消除是否以'/'开头的`to`的歧义。
-  // 然而，对于不提供路径名的`to`值来说，这是有问题的。
-  // 因为`to`可以是一个search或hash，在这种情况下，我们应该假设navigation是相对于当前location的pathname，而不是route pathname
+  // 然而，对于不提供pathname的`to`来说，这是有问题的。
+  // 因为`to`可以是一个search或hash，如to = { search: 'xxx', hash: 'xxx'} 或 to = `?{search}#{hash}`
+  // 在这种情况下，我们应该假设navigation是相对于当前location的pathname，而不是route pathname
   let from: string;
   if (toPathname == null) {
+    // 如果to传入是PartialPath形式且没传入pathname，那这里得到的toPathname就是undefined了。
+    // 那么from等于当前路径名
     from = locationPathname;
   } else {
+    // 到了这里toPathname有值，那么判断其中是否有.., eg: locationPathname = 'basic', to = '../auth/login'
     let routePathnameIndex = routePathnames.length - 1;
-
     if (toPathname.startsWith("..")) {
       // 如果toPathname以..开头，如../login,那么toSegments = ['..','login']
       const toSegments = toPathname.split("/");
@@ -1461,16 +1488,19 @@ function resolveTo(
         toSegments.shift();
         routePathnameIndex -= 1;
       }
-
       to.pathname = toSegments.join("/");
     }
 
     // If there are more ".." segments than parent routes, resolve relative to
     // the root / URL.
-    // 如果m ".."片段超过了 parent routes，那么from相对于 '/'
+    // 如果m ".."片段超过了 parent routes，那么from相对于 root url '/'
     from = routePathnameIndex >= 0 ? routePathnames[routePathnameIndex] : "/";
   }
-
+  /**
+   * 如果 to.pathname 为空，或空字符串，那么直接取 from
+   * 如果to.pathname以 / 开头，那么直接取 to.pathname
+   * 否则是 resolvePathname(to.pathname, from)
+   */
   const path = resolvePath(to, from);
 
   // Ensure the pathname has a trailing slash if the original to value had one.
@@ -1483,17 +1513,22 @@ function resolveTo(
     // 如果toPathname以/结尾但不等于/，且resolvePath后得到的path.pathname不以/结尾，那么path.pathname要以/结尾
     path.pathname += "/";
   }
-
   return path;
 }
-
+/**
+ * @description: 获取to.pathname
+ * 
+ * - 如果 `to`或 `to.pathname`为'', return '/'
+ * - 否则 `to`为字符串， return `parsePath(to).pathname`
+ * - 否则  return `to.pathname`
+ */
 function getToPathname(to: To): string | undefined {
   // Empty strings should be treated the same as / paths
   return to === "" || (to as Path).pathname === ""
     ? "/"
-    : typeof to === "string"
+    : (typeof to === "string"
     ? parsePath(to).pathname
-    : to.pathname;
+    : to.pathname);
 }
 /**
  * @description 获取pathname中basename后的字符串，如果basename是/,直接返回该pathname
@@ -1548,9 +1583,9 @@ const normalizePathname = (pathname: string): string =>
 const normalizeSearch = (search: string): string =>
   !search || search === "?"
     ? ""
-    : search.startsWith("?")
+    : (search.startsWith("?")
     ? search
-    : "?" + search;
+    : "?" + search);
 
 /**
  * @description 

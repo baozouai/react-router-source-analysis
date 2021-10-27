@@ -121,6 +121,8 @@ export interface BrowserRouterProps {
 }
 
 /**
+ * @description 里面会生成`history`，并把`setState<{action; location}>`放入对应的`listeners`，那么路由切换就会`setState`了
+ * 
  * A <Router> for use in web browsers. Provides the cleanest URLs.
  */
 export function BrowserRouter({
@@ -205,6 +207,7 @@ export interface LinkProps
 }
 
 /**
+ * @description 实质上封装了 `<a>`
  * The public API for rendering a history-aware <a>.
  */
 export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
@@ -217,7 +220,7 @@ export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
     function handleClick(
       event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
     ) {
-      // 如果有传onClick，那么改onClick
+      // 如果有传onClick，那么调用该onClick
       if (onClick) onClick(event);
       // 否则如果没有阻止默认行为的话，那么调用internalOnClick
       if (!event.defaultPrevented) {
@@ -427,16 +430,16 @@ export type URLSearchParamsInit =
  * instead of just strings. This is convenient when you need multiple
  * values for a given key, but don't want to use an array initializer.
  *
- * For example, instead of:
+ * @example:
  *
- *   let searchParams = new URLSearchParams([
+ *   const searchParams = new URLSearchParams([
  *     ['sort', 'name'],
  *     ['sort', 'price']
  *   ]);
  *
  * you can do:
  *
- *   let searchParams = createSearchParams({
+ *   const searchParams = createSearchParams({
  *     sort: ['name', 'price']
  *   });
  */

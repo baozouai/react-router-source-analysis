@@ -32,6 +32,18 @@ function Layout() {
       <nav>
         <ul>
           <li>
+            <Link to={{}}>to current location</Link>
+          </li>
+          <li>
+            <Link to="">to current location 1</Link>
+          </li>
+          <li>
+            <Link to={"/auth"}>to auth(to = /auth)</Link>
+          </li>
+          <li>
+            <Link to="../../auth">to auth(to = ../../auth)</Link>
+          </li>
+          <li>
             <Link to=".">Home</Link>
           </li>
           <li>
