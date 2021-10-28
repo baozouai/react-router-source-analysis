@@ -1,7 +1,42 @@
-import { Routes, Route, Outlet, Link } from "react-router-dom";
+/*
+ * @Description: 通过嵌套数组形式
+ * @Author: Moriaty
+ * @Date: 2021-10-28 19:22:14
+ * @Last modified by: Moriaty
+ * @LastEditTime: 2021-10-28 19:33:35
+ */
+import { Outlet, Link, useRoutes } from "react-router-dom";
 
-export default function App() {
-
+export default function RouteObject() {
+  const routeElements = useRoutes([
+    {
+      element: <Layout />,
+      children: [
+        {
+          index: true,
+          element: <Home />
+        },
+        {
+          path: 'about',
+          element: <About />,
+          children: [
+            {
+              path: '/about/child',
+              element: <AboutChild />
+            },
+          ]
+        },
+        {
+          path: 'dashboard',
+          element: <Dashboard />,
+        },
+        {
+          path: '*',
+          element: <NoMatch />,
+        },
+      ]
+    }
+  ])
   return (
     <div>
       <h1>Welcome to the app!</h1>
@@ -9,23 +44,7 @@ export default function App() {
       {/* Routes nest inside one another. Nested route paths build upon
             parent route paths, and nested route elements render inside
             parent route elements. See the note about <Outlet> below. */}
-      <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="about" element={<About />}>
-            {/* parentPath为'/about', meta.relativePath = '/child'，不是以parentPath开头的，会报错 */}
-            {/* <Route path='/child' element={<AboutChild />} /> */}
-            {/* parentPath为'/about', meta.relativePath = '/about/child'，是以parentPath开头的，那么不会报错 */}
-            <Route path='/about/child' element={<AboutChild />} />
-          </Route>
-          <Route path="dashboard" element={<Dashboard />} />
-
-          {/* Using path="*"" means "match anything", so this route
-                acts like a catch-all for URLs that we don't have explicit
-                routes for. */}
-          <Route path="*" element={<NoMatch />} />
-        </Route>
-      </Routes>
+        {routeElements}
     </div>
   );
 }

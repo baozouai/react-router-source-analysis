@@ -10,6 +10,7 @@ import SearchParams from './examples/search-params'
 import SSR from './examples/ssr'
 import UseRoutes from './examples/use-routes'
 import Blocker from './examples/blocker'
+import RouteObject from './examples/route-object'
 import './App.css'
 const routeConfigs = [
   {
@@ -48,6 +49,10 @@ const routeConfigs = [
     path: 'blocker',
     Element: Blocker,
   },
+  {
+    path: 'route-object',
+    Element: RouteObject,
+  }
 ]
 
 function Layout() {
