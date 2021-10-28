@@ -197,7 +197,7 @@ export interface History<S extends State = State> {
   readonly location: Location<S>;
 
   /**
-   * 返回一个新的href, to为string则返回to，否则返回 `createPath(to)`
+   * @description 返回一个新的href, to为string则返回to，否则返回 `createPath(to)` => pathname + search + hash
    * 
    * Returns a valid href for the given `to` value that may be used as
    * the value of an <a href> attribute.
@@ -379,9 +379,11 @@ export function createBrowserHistory(
   }
   /** 用于存储下面的 blockers.call方法的参数，有 { action,location,retry }  */
   let blockedPopTx: Transition | null = null;
-  /** popstate的回调 */
+  /** popstate的回调, 点击浏览器 ← 或 → 会触发 */
   function handlePop() {
     debugger
+    // 第一次进来没有值，然后下面的else判断到有blockers.length就会赋值，之后判断到if (delta)就好调用go(delta)，
+    // 就会再次触发handlePop，然后这里满足条件进入blockers.call(blockedPopTx)
     if (blockedPopTx) {
       // 如果参数有值，那么将参数传给blockers中的handlers
       blockers.call(blockedPopTx);
@@ -391,11 +393,14 @@ export function createBrowserHistory(
       // 为空的话，给blockPopTx赋值
       // 因为是popstate，那么这里的nextAction就是pop了
       const nextAction = Action.Pop;
+      // 点击浏览器前进或后退后的state.idx和location
+      // 比如/basic/about的index = 2, 点击后退后就会触发handlePop，后退后的nextLocation.pathname = /basic, nextIndex = 1
       const [nextIndex, nextLocation] = getIndexAndLocation();
 
       if (blockers.length) {
         if (nextIndex != null) {
           // 这里的index是上一次的getIndexAndLocation得到了，下面有
+          // 从上面例子 delta = index - nextIndex = 2 - 1 = 1
           const delta = index - nextIndex;
           if (delta) {
             // Revert the POP
@@ -403,10 +408,15 @@ export function createBrowserHistory(
               action: nextAction,
               location: nextLocation,
               retry() {
+                // 由于下面的go(delta)阻塞了当前页面的变化，那么retry就可以让页面真正符合浏览器行为的变化了
+                // 这个在blocker回调中可以调用
                 go(delta * -1);
               }
             };
-
+            // 上面/basic/about => /basic，delta为1，那么go(1)就又到了/basic/about
+            // 此处是真正触发前进后退时保持当前location不变的关键所在
+            // 还有需要特别注意一点的是，这里调用go后又会触发handleProp，那么if (blockedPopTx)就为true了，那么
+            // 就会调用blockers.call(blockedPopTx)，blocer可以根据blockedPopTx的retry看是否允许跳转页面，然后再把blockedPopTx = null
             go(delta);
           }
         } else {
@@ -434,15 +444,17 @@ export function createBrowserHistory(
   /**
    * 监听popstate
    * 调用history.pushState()或history.replaceState()不会触发popstate事件。
-   * 只有在做出浏览器动作时，才会触发该事件，如用户点击浏览器的回退按钮、在Javascript代码中调用history.back()
-   * 、history.forward()方法
+   * 只有在做出浏览器动作时，才会触发该事件，如用户点击浏览器的前进、后退按钮、在Javascript代码中调用history.back()
+   * 、history.forward()、history.go方法,此外，a 标签的锚点也会触发该事件
    * 
-   * ref: https://developer.mozilla.org/zh-CN/docs/Web/API/Window/popstate_event
+   * @see https://developer.mozilla.org/zh-CN/docs/Web/API/Window/popstate_event
    */
   window.addEventListener(PopStateEventType, handlePop);
 
   let action = Action.Pop;
+  // createBrowserHistory创建的时候获取初始当前路径index和location
   let [index, location] = getIndexAndLocation();
+  // blockers不为空的话listeners不会触发
   const listeners = createEvents<Listener>();
   const blockers = createEvents<Blocker>();
 
@@ -452,7 +464,7 @@ export function createBrowserHistory(
     // 这里replaceState后，history.state.idx就为0了
     globalHistory.replaceState({ ...globalHistory.state, idx: index }, '');
   }
-  /** 返回一个新的href, to为string则返回to，否则返回 `createPath(to)` */
+  /** 返回一个新的href, to为string则返回to，否则返回 `createPath(to)` => pathname + search + hash */
   function createHref(to: To) {
     return typeof to === 'string' ? to : createPath(to);
   }
@@ -484,7 +496,7 @@ export function createBrowserHistory(
     ];
   }
   /** 
-   * @description 判断是否允许路由切换
+   * @description 判断是否允许路由切换，有blockers就不允许
    * 
    * - blockers有handlers，那么消费handlers，然后返回false
    * - blockers没有handlers，返回true
@@ -496,6 +508,7 @@ export function createBrowserHistory(
   }
   /** blocker为空才执行所有的listener, handlePop、push、replace都会调用 */
   function applyTx(nextAction: Action) {
+    debugger
     action = nextAction;
   //  获取当前index和location
     [index, location] = getIndexAndLocation();
@@ -503,12 +516,37 @@ export function createBrowserHistory(
   }
   /** history.push,跳到哪个页面 */
   function push(to: To, state?: State) {
+    debugger
     const nextAction = Action.Push;
     const nextLocation = getNextLocation(to, state);
+    /**
+     * retry的目的是为了如果有blockers可以在回调中调用
+     * @example
+     * const { navigator } = useContext(UNSAFE_NavigationContext)
+     * const countRef = useRef(0)
+     * useEffect(() => {
+     *   const unblock  = navigator.block((tx) => {
+     *     // block两次后调用retry和取消block
+     *     if (countRef.current < 2) {
+     *       countRef.current  = countRef.current + 1
+     *     } else {
+     *       unblock();
+     *       tx.retry()
+     *     }
+     *   })
+     * }, [navigator])
+     * 
+     * 当前路径为/blocker
+     * 点击<Link to="about">About({`<Link to="about">`})</Link>
+     * 第三次(countRef.current >= 2)因为unblock了，随后调用rety也就是push(to, state)判断到下面的allowTx返回true，
+     * 就成功pushState了，push到/blocker/about了
+     */
     function retry() {
       push(to, state);
     }
-
+    // 只要blockers不为空下面就进不去
+    // 但是blockers回调里可以unblock(致使blockers.length = 0),然后再调用retry，那么又会重新进入这里，
+    // 就可以调用下面的globalHistory改变路由了
     if (allowTx(nextAction, nextLocation, retry)) {
       const [historyState, url] = getHistoryStateAndUrl(nextLocation, index + 1);
 
@@ -530,10 +568,34 @@ export function createBrowserHistory(
   function replace(to: To, state?: State) {
     const nextAction = Action.Replace;
     const nextLocation = getNextLocation(to, state);
+    /**
+     * retry的目的是为了如果有blockers可以在回调中调用
+     * @example
+     * const { navigator } = useContext(UNSAFE_NavigationContext)
+     * const countRef = useRef(0)
+     * useEffect(() => {
+     *   const unblock  = navigator.block((tx) => {
+     *     // block两次后调用retry和取消block
+     *     if (countRef.current < 2) {
+     *       countRef.current  = countRef.current + 1
+     *     } else {
+     *       unblock();
+     *       tx.retry()
+     *     }
+     *   })
+     * }, [navigator])
+     * 
+     * 当前路径为/blocker
+     * 点击<Link to="about">About({`<Link to="about">`})</Link>
+     * 第三次(countRef.current >= 2)因为unblock了，随后调用rety也就是push(to, state)判断到下面的allowTx返回true，
+     * 就成功pushState了，push到/blocker/about了
+     */
     function retry() {
       replace(to, state);
     }
-
+    // 只要blockers不为空下面就进不去
+    // 但是blockers回调里可以unblock(致使blockers.length = 0),然后再调用retry，那么又会重新进入这里，
+    // 就可以调用下面的globalHistory改变路由了
     if (allowTx(nextAction, nextLocation, retry)) {
       const [historyState, url] = getHistoryStateAndUrl(nextLocation, index);
 
@@ -574,16 +636,18 @@ export function createBrowserHistory(
 
       if (blockers.length === 1) {
         // beforeunload
+        // 只在第一次block加上beforeunload事件
         window.addEventListener(BeforeUnloadEventType, promptBeforeUnload);
       }
 
       return function() {
         unblock();
-        // 一出去beforeunload事件监听器一遍document在pagehide事件中仍可以使用
+        // 移除beforeunload事件监听器以便document在pagehide事件中仍可以使用
         // Remove the beforeunload listener so the document may
         // still be salvageable in the pagehide event.
         // See https://html.spec.whatwg.org/#unloading-documents
         if (!blockers.length) {
+          // 移除的时候发现blockers空了那么就移除`beforeunload`事件
           window.removeEventListener(BeforeUnloadEventType, promptBeforeUnload);
         }
       };
@@ -632,6 +696,7 @@ export function createHashHistory(
 
   let blockedPopTx: Transition | null = null;
   function handlePop() {
+    debugger
     if (blockedPopTx) {
       blockers.call(blockedPopTx);
       blockedPopTx = null;
@@ -690,6 +755,7 @@ export function createHashHistory(
 
   let action = Action.Pop;
   let [index, location] = getIndexAndLocation();
+  // blockers不为空的话listeners不会触发
   const listeners = createEvents<Listener>();
   const blockers = createEvents<Blocker>();
 
@@ -752,8 +818,31 @@ export function createHashHistory(
   }
 
   function push(to: To, state?: State) {
+    debugger
     const nextAction = Action.Push;
     const nextLocation = getNextLocation(to, state);
+    // retry的目的是为了如果有blockers可以在回调中调用
+    /**
+     * @example
+     * const { navigator } = useContext(UNSAFE_NavigationContext)
+     * const countRef = useRef(0)
+     * useEffect(() => {
+     *   const unblock  = navigator.block((tx) => {
+     *     // block两次后调用retry和取消block
+     *     if (countRef.current < 2) {
+     *       countRef.current  = countRef.current + 1
+     *     } else {
+     *       unblock();
+     *       tx.retry()
+     *     }
+     *   })
+     * }, [navigator])
+     * 
+     * 当前路径为/blocker
+     * 点击<Link to="about">About({`<Link to="about">`})</Link>
+     * 第三次因为unblock了，随后调用rety也就是push(to, state)判断到下面的allowTx返回true，
+     * 就成功pushState了，push到/blocker/about了
+     */
     function retry() {
       push(to, state);
     }
@@ -764,7 +853,9 @@ export function createHashHistory(
         to
       )})`
     );
-
+    // 只要blockers不为空下面就进不去
+    // 但是blockers回调里可以unblock(致使blockers.length = 0),然后再调用retry，那么又会重新进入这里，
+    // 就可以调用下面的globalHistory改变路由了
     if (allowTx(nextAction, nextLocation, retry)) {
       const [historyState, url] = getHistoryStateAndUrl(nextLocation, index + 1);
 
@@ -795,7 +886,9 @@ export function createHashHistory(
         to
       )})`
     );
-
+    // 只要blockers不为空下面就进不去
+    // 但是blockers回调里可以unblock(致使blockers.length = 0),然后再调用retry，那么又会重新进入这里，
+    // 就可以调用下面的globalHistory改变路由了
     if (allowTx(nextAction, nextLocation, retry)) {
       const [historyState, url] = getHistoryStateAndUrl(nextLocation, index);
 
@@ -844,6 +937,7 @@ export function createHashHistory(
         // still be salvageable in the pagehide event.
         // See https://html.spec.whatwg.org/#unloading-documents
         if (!blockers.length) {
+          // 移除的时候发现blockers空了那么就移除`beforeunload`事件
           window.removeEventListener(BeforeUnloadEventType, promptBeforeUnload);
         }
       };
@@ -1026,7 +1120,7 @@ export function createMemoryHistory(
 function clamp(n: number, lowerBound: number, upperBound: number) {
   return Math.min(Math.max(n, lowerBound), upperBound);
 }
-/** 阻止beforeunload默认行为 */
+/** 刷新、修改路径然后enter、关闭页面前都会弹窗询问 */
 function promptBeforeUnload(event: BeforeUnloadEvent) {
   // Cancel the event.
   event.preventDefault();
@@ -1055,6 +1149,7 @@ function createEvents<F extends Function>(): Events<F> {
       };
     },
     call(arg) {
+      debugger
       // 消费所有handle
       handlers.forEach(fn => fn && fn(arg));
     }

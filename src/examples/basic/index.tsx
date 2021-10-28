@@ -1,10 +1,11 @@
 import { Routes, Route, Outlet, Link } from "react-router-dom";
 
 export default function App() {
+
   return (
     <div>
       <h1>Welcome to the app!</h1>
-
+      <h2>下面()中的就是真实的Link组件</h2>
       {/* Routes nest inside one another. Nested route paths build upon
             parent route paths, and nested route elements render inside
             parent route elements. See the note about <Outlet> below. */}
@@ -32,28 +33,28 @@ function Layout() {
       <nav>
         <ul>
           <li>
-            <Link to={{}}>to current location</Link>
+            <Link to={{}}>to current location ({`<Link to={{}}>`})</Link>
           </li>
           <li>
-            <Link to="">to current location 1</Link>
+            <Link to="">to current location 1 ({`<Link to="">`})</Link>
           </li>
           <li>
-            <Link to={"/auth"}>to auth(to = /auth)</Link>
+            <Link to={"/auth"}>to auth({`<Link to={"/auth"}>`})</Link>
           </li>
           <li>
-            <Link to="../../auth">to auth(to = ../../auth)</Link>
+            <Link to="../../auth">to auth({`<Link to="../../auth">`})</Link>
           </li>
           <li>
-            <Link to=".">Home</Link>
+            <Link to=".">Home({` <Link to=".">`})</Link>
           </li>
           <li>
-            <Link to="about">About</Link>
+            <Link to="about">About({`<Link to="about">`})</Link>
           </li>
           <li>
-            <Link to="dashboard">Dashboard</Link>
+            <Link to="dashboard">Dashboard({`<Link to="dashboard">`})</Link>
           </li>
           <li>
-            <Link to="nothing-here">Nothing Here</Link>
+            <Link to="nothing-here">Nothing Here({`<Link to="nothing-here">`})</Link>
           </li>
         </ul>
       </nav>

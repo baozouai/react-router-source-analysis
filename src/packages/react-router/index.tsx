@@ -54,7 +54,8 @@ function warningOnce(key: string, cond: boolean, message: string) {
  */
 export type Navigator = Omit<
   History,
-  "action" | "location" | "back" | "forward" | "listen" | "block"
+  // "action" | "location" | "back" | "forward" | "listen" | "block"
+  "action" | "location" | "back" | "forward"
 >;
 
 interface NavigationContextObject {
@@ -205,7 +206,15 @@ export interface PathRouteProps {
   index?: false;
   path: string;
 }
-
+/**
+ * @description 只能有children和element
+ * 
+ * @example 最外层Route
+ *  <Route element={<Layout />}>
+ *    <Route index element={<Home />} />
+ *    ...
+ * </Route>
+ */
 export interface LayoutRouteProps {
   children?: React.ReactNode;
   element?: React.ReactElement | null;
@@ -214,7 +223,19 @@ export interface LayoutRouteProps {
 export interface IndexRouteProps {
   /** 用于正则匹配是否要加上i，false才加，表示忽略大小写 */
   caseSensitive?: boolean;
+  /** path要render的element */
   element?: React.ReactElement | null;
+  /** 
+   * 没设置path的child route
+   * 
+   * @example
+   * 如 src/examples/basic/index.tsx, 当前路径http://localhost:3000/basic
+   *  <Route element={<Layout />}>
+   *    <Route index element={<Home />} />
+   *    ...
+   * </Route>
+   * 那么会<Layout />中的<Outlet />会render <Home />
+   *  */
   index: true;
   path?: string;
 }
@@ -638,6 +659,7 @@ export function useRoutes(
     parentPathnameBase === "/"
       ? pathname
       : pathname.slice(parentPathnameBase.length) || "/";
+  debugger
   const matches = matchRoutes(routes, { pathname: remainingPathname });
 
   return _renderMatches(
@@ -839,16 +861,33 @@ export function matchRoutes(
   let matches = null;
   // 直到`matches`有值(意味着匹配到，那么自然不用再找了）或遍历完`branches`才跳出循环
   for (let i = 0; matches == null && i < branches.length; ++i) {
-    matches = matchRouteBranch(branches[i], routes, pathname);
+    matches = matchRouteBranch(branches[i], pathname);
   }
 
   return matches;
 }
 
 interface RouteMeta {
+  /** 相对路径, 就是`Route`的 `path` 
+   * 
+   * @example
+   * 
+   * <Route path="login" element={<LoginPage />} />
+  */
   relativePath: string;
+  /** 是否区分大小写正则匹配 */
   caseSensitive: boolean;
+  /** 
+   * @description 在当层routes中的排序
+   * 
+   * @example
+   * <Route element={<Layout />}>
+   *   <Route path="" element={<PublicPage />} /> childrenIndex = 0
+   *   <Route path="login" element={<LoginPage />} /> childrenIndex = 1
+   * </Route>
+   *  */
   childrenIndex: number;
+  route: RouteObject
 }
 
 interface RouteBranch {
@@ -857,7 +896,18 @@ interface RouteBranch {
   routesMeta: RouteMeta[];
 }
 /**
- * @description 如果route有children，会先把children处理完push `branches`，然后再push该`route`
+ * @description 深度优先遍历，如果route有`children`，会先把children处理完push `branches`，然后再push该`route`，
+ * 要特别注意两点：
+ * - `LayoutRoute`即只有`element`和`children`的不会push进`branches`
+ * - 当前Route处于第几层，那么得到的`branch.routesMeta.length` 就为多少 
+ * 
+ * 
+ * @example
+ * <Route path='/' element={<Layout />}> 
+ *   <Route path='auth/*' element={<Auth />} />
+ *   <Route path='auth/*' element={<Auth />} />
+ * </Route>
+ * 那么得到的branches为 [{ path: '/auth/*', ...},{ path: '/basic/*', ...}, { path: '/', ...}]
  */
 function flattenRoutes(
   routes: RouteObject[],
@@ -867,9 +917,11 @@ function flattenRoutes(
 ): RouteBranch[] {
   routes.forEach((route, index) => {
     const meta: RouteMeta = {
+      // 如果path为''，或者不写(LayoutRoute),那么relativePath统一为''
       relativePath: route.path || "",
       caseSensitive: route.caseSensitive === true,
-      childrenIndex: index
+      childrenIndex: index,
+      route,
     };
 
     if (meta.relativePath.startsWith("/")) {
@@ -885,8 +937,11 @@ function flattenRoutes(
       meta.relativePath = meta.relativePath.slice(parentPath.length);
     }
     // 将parentPath, meta.relativePath用 / 连起来成为绝对路径
+    // eg: parentPath = '/', meta.relativePath = 'auhth/*', path = '/auth/*'
+    // eg: <Route path="" element={<PublicPage />} /> joinPaths(['', '']) => '/'
     const path = joinPaths([parentPath, meta.relativePath]);
     // 这里用concat就不会影响到parentsMeta
+    // 而从这里我们也知道了，如果routesMeta.length > 1, 那么除最后一个meta，前面的肯定是本route的parentsMeta
     const routesMeta = parentsMeta.concat(meta);
 
     // Add the children before adding this route to the array so we traverse the
@@ -906,11 +961,12 @@ function flattenRoutes(
     // Routes without a path shouldn't ever match by themselves unless they are
     // index routes, so don't add them to the list of possible branches.
     if (route.path == null && !route.index) {
-      // 如果route没有path，且不是index route，那么不放入branches
+      // 如果route没有path，且不是index route，那么不放入branches，这里的route一般是LayoutRoute，
+      // 看下面example的<Route element={<Layout />}>
       /**
        * @example
        * 对于 examples/auth/index.tsx, http://localhost:3000/auth
-       * // 最外层的Route就没有path和index，那么就return
+       * // 最外层的Route（LayoutRoute）就没有path和index，那么就return
        * 
        * <Route element={<Layout />}>
        *   <Route path="" element={<PublicPage />} />
@@ -1015,7 +1071,7 @@ function computeScore(path: string, index: boolean | undefined): number {
   // 过滤掉片段中等于*的，然后遍历每一片段，累加initialScore
   // - 如果该片段是动态的，比如:id,那么+3
   // - 如果该片段是空字符串""，那么+1
-  // - 否则+10
+  // - 否则是静态字符串，表明是很具体的，那么+10，权重最大 
   return segments
     .filter(s => !isSplat(s))
     .reduce(
@@ -1023,9 +1079,9 @@ function computeScore(path: string, index: boolean | undefined): number {
         score +
         (paramRe.test(segment)
           ? dynamicSegmentValue
-          : segment === ""
+          : (segment === ""
           ? emptySegmentValue
-          : staticSegmentValue),
+          : staticSegmentValue)),
       initialScore
     );
 }
@@ -1033,10 +1089,10 @@ function computeScore(path: string, index: boolean | undefined): number {
 function matchRouteBranch<ParamKey extends string = string>(
   branch: RouteBranch,
   // TODO: attach original route object inside routesMeta so we don't need this arg
-  routesArg: RouteObject[],
+  // routesArg: RouteObject[],
   pathname: string
 ): RouteMatch<ParamKey>[] | null {
-  let routes = routesArg;
+  // let routes = routesArg;
   const { routesMeta } = branch;
   /** 已匹配到的动态参数 */
   const matchedParams = {};
@@ -1047,7 +1103,8 @@ function matchRouteBranch<ParamKey extends string = string>(
     const meta = routesMeta[i];
     // 是否到了最后一个routesMeta
     const end = i === routesMeta.length - 1;
-    // remainingPathname表示剩下还没匹配到的路径
+    // remainingPathname表示剩下还没匹配到的路径，因为下面是用meta.relativePath去正则匹配，所以这里
+    // 每遍历一次要去将传入pathname.slice(matchedPathname.length)
     // matchedPathname不为 '/'那么就从pathname中的matchedPathname后截取
     // eg: pathname = `${matchedPathname}xxx`，remainingPathname = 'xxx'
     // eg: matchedPathname = '/', pathname = `/`，remainingPathname = '/'
@@ -1056,6 +1113,9 @@ function matchRouteBranch<ParamKey extends string = string>(
       matchedPathname === "/"
         ? pathname
         : pathname.slice(matchedPathname.length) || "/";
+    /**
+     * 会返回{ params, pathname, pathnameBase, pattern } or null
+     */
     const match = matchPath(
       { path: meta.relativePath, caseSensitive: meta.caseSensitive, end },
       remainingPathname
@@ -1065,7 +1125,8 @@ function matchRouteBranch<ParamKey extends string = string>(
 
     Object.assign(matchedParams, match.params);
 
-    const route = routes[meta.childrenIndex];
+    // const route = routes[meta.childrenIndex];
+    const route = meta.route;
 
     matches.push({
       params: matchedParams,
@@ -1077,8 +1138,8 @@ function matchRouteBranch<ParamKey extends string = string>(
     if (match.pathnameBase !== "/") {
       matchedPathname = joinPaths([matchedPathname, match.pathnameBase]);
     }
-    // 上面已经match到了，那么继续从其children中查找，特别注意的是routes的层次与routesMeta.length相对，所以这里加了!
-    routes = route.children!;
+    // // 上面已经match到了，那么继续从其children中查找，特别注意的是routes的层次与routesMeta.length相对，所以这里加了!
+    // routes = route.children!;
   }
 
   return matches;
@@ -1226,6 +1287,11 @@ export function matchPath<ParamKey extends string = string>(
       // instead of using params["*"] later because it will be decoded then
       if (paramName === "*") {
         const splatValue = captureGroups[index] || "";
+        // eg:
+        // pattern.path = 'basic/*', matchedPathname = '/basic/about', captureGroups =['about'] 
+        // matchedPathname.slice(0, matchedPathname.length - splatValue.length) => '/basic/'
+        // '/basic/'.replace(/(.)\/+$/, "$1") = '/basic'
+        pathnameBase = '/basic', 
         pathnameBase = matchedPathname
           .slice(0, matchedPathname.length - splatValue.length)
           .replace(/(.)\/+$/, "$1");

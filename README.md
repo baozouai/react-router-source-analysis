@@ -1,19 +1,20 @@
 # react-router-source-analysis
-react-router、react-router、history源码分析
+react-router(6.0.0-beta.8)、react-router(6.0.0-beta.8)、history(5.0.1)源码分析
 
 ## packages
 
-- [react-router](./src/packages/react-router)
-- [react-router-dom](./src/packages/react-router-dom)
-- [history](./src/packages/history)
+- [react-router](./src/packages/react-router/index.tsx)
+- [react-router-dom](./src/packages/react-router-dom/index.tsx)
+- [history](./src/packages/history/index.ts)
 ## examples
 
-- [auth](./src/examples/auth)
-- [basic](./src/examples/basic)
-- [custom-filter-link](./src/examples/custom-filter-link)
-- [custom-link](./src/examples/custom-link)
-- [modal](./src/examples/modal)
-- [search-params](./src/examples/search-params)
-- [ssr](./src/examples/ssr)
-- [use-routes](./src/examples/ssr)
+- [auth](./src/examples/auth/index.tsx)
+- [basic](./src/examples/basic/index.tsx)
+- [custom-filter-link](./src/examples/custom-filter-link/index.tsx)
+- [custom-link](./src/examples/custom-link/index.tsx)
+- [modal](./src/examples/modal/index.tsx)
+- [search-params](./src/examples/search-params/index.tsx)
+- [ssr](./src/examples/ssr/index.tsx)
+- [use-routes](./src/examples/use-routes/index.tsx)
+- [blocker](./src/examples/blocker/index.tsx)
 
