@@ -145,7 +145,15 @@ export function BrowserRouter({
 
   React.useLayoutEffect(() => {
     debugger
-    // popstate、push、replace会触发这里的setState
+    /**
+     * popstate、push、replace时如果没有blokcers的话，会调用applyTx(nextAction)触发这里的setState
+     * function applyTx(nextAction: Action) {
+     *   action = nextAction;
+     * //  获取当前index和location
+     *   [index, location] = getIndexAndLocation();
+     *   listeners.call({ action, location });
+     * }
+     */
     history.listen(setState)
   }, [history]);
   // 一般变化的就是action和location
@@ -356,9 +364,10 @@ export function useLinkClickHandler<
         // If the URL hasn't changed, a regular <a> will do a replace instead of
         // a push, so do the same here.
         // 如果有传replace为true或当前location和传入path的`pathname + search + hash`相等，那么replace为true
+        // 比如当前路径为/basic, 点后点击<Link to='.'>，那上面的useResolvedPath(to)的path还是为{pathname: '/basic', search: '', hash: ''}
+        // 那么这里的replace就满足createPath(location) === createPath(path)，即为true了，那就是replace，如果不是跳本路由，那么就为false，那就是push
         const replace =
           !!replaceProp || createPath(location) === createPath(path);
-
         navigate(to, { replace, state });
       }
     },
