@@ -251,6 +251,13 @@ export function Route(
   _props: PathRouteProps | LayoutRouteProps | IndexRouteProps
 ): React.ReactElement | null {
   // Route实际上没有render，只是作为Routes的child
+  // Route必须放Routes里面，主要一进来就会报错
+  // 以下是正确的使用方式
+  // <Route element={<Layout />}>
+  //     <Route index element={<Home />} />
+  //     <Route path="about" element={<About />} />
+  //   </Route>
+  // </Routes>
   invariant(
     false,
     `A <Route> is only ever to be used as the child of <Routes> element, ` +
@@ -458,7 +465,6 @@ export function useMatch<ParamKey extends string = string>(
 
   return matchPath(pattern, useLocation().pathname);
 }
-
 /**
  * The interface for the navigate() function returned from useNavigate().
  */
@@ -815,6 +821,7 @@ export function matchRoutes(
   locationArg: Partial<Location> | string,
   basename = "/"
 ): RouteMatch[] | null {
+  /** 得到pathname、hash、search */ 
   const location =
     typeof locationArg === "string" ? parsePath(locationArg) : locationArg;
   // pathname是一个取出来basename的相对路径
@@ -897,17 +904,25 @@ interface RouteBranch {
 }
 /**
  * @description 深度优先遍历，如果route有`children`，会先把children处理完push `branches`，然后再push该`route`，
- * 要特别注意两点：
- * - `LayoutRoute`即只有`element`和`children`的不会push进`branches`
- * - 当前Route处于第几层，那么得到的`branch.routesMeta.length` 就为多少 
+ * 要特别注意三点：
+ * - `LayoutRoute`即只有`element`和`children`，不会push进`branches`
+ * - `route`不写`path`的话，会给`meta.relativepath`赋值空字符串'' => `relativePath: route.path || ""`
+ * - 当前`route`处于第几层，那么得到的`branch.routesMeta.length` 就为多少 
  * 
  * 
  * @example
  * <Route path='/' element={<Layout />}> 
  *   <Route path='auth/*' element={<Auth />} />
- *   <Route path='auth/*' element={<Auth />} />
+ *   <Route path='basic/*' element={<Basic />} />
  * </Route>
  * 那么得到的branches为 [{ path: '/auth/*', ...},{ path: '/basic/*', ...}, { path: '/', ...}]
+ * 
+ * // `LayoutRoute`只有`element`和`children`，不会push进`branches`
+ * <Route element={<Layout />}> 
+ *   <Route path='auth/*' element={<Auth />} />
+ *   <Route path='basic/*' element={<Basic />} />
+ * </Route>
+ * 那么得到的branches为 [{ path: '/auth/*', ...},{ path: '/basic/*', ...}]
  */
 function flattenRoutes(
   routes: RouteObject[],
@@ -925,8 +940,17 @@ function flattenRoutes(
     };
 
     if (meta.relativePath.startsWith("/")) {
-      // 如果相对路径以"/"开头，说明是绝对路径，那么必须要以parentPath开头，否则这里会报错。
-      // 因为这里是嵌套在parentPath下的路由
+      /**
+       * 如果相对路径以"/"开头，说明是绝对路径，那么必须要以parentPath开头，否则这里会报错。
+       * 因为这里是嵌套在parentPath下的路由
+       * eg from src/examples/basic/index.tsx: 
+       * <Route path="about" element={<About />}>
+       *   // parentPath为'/about', meta.relativePath = '/child'，不是以parentPath开头的，会报错
+       *   <Route path='/child' element={<AboutChild />} />
+       *   // parentPath为'/about', meta.relativePath = '/about/child'，是以parentPath开头的，那么不会报错
+       *   <Route path='/about/child' element={<AboutChild />} />
+       * </Route>
+       */
       invariant(
         meta.relativePath.startsWith(parentPath),
         `Absolute route path "${meta.relativePath}" nested under path ` +
@@ -934,6 +958,8 @@ function flattenRoutes(
           `must start with the combined path of all its parent routes.`
       );
       // 到这里就说明是以parentPath开头了，那么相对路径不需要parentPath，取后面的
+      // 如上面eg,path="about" 会被下面的joinPath变成'/about',
+      //  meta.relativePath = '/about/child'.slice('/about'.length  // 6) = '/child'
       meta.relativePath = meta.relativePath.slice(parentPath.length);
     }
     // 将parentPath, meta.relativePath用 / 连起来成为绝对路径
@@ -1007,6 +1033,7 @@ function flattenRoutes(
       return;
     }
     // 到了这里满足上面的所有条件了，那么放入branches
+    //那么routesMeta.length = route自身所处层数
     branches.push({ path, score: computeScore(path, route.index), routesMeta });
   });
 
@@ -1088,11 +1115,8 @@ function computeScore(path: string, index: boolean | undefined): number {
 
 function matchRouteBranch<ParamKey extends string = string>(
   branch: RouteBranch,
-  // TODO: attach original route object inside routesMeta so we don't need this arg
-  // routesArg: RouteObject[],
   pathname: string
 ): RouteMatch<ParamKey>[] | null {
-  // let routes = routesArg;
   const { routesMeta } = branch;
   /** 已匹配到的动态参数 */
   const matchedParams = {};
@@ -1101,7 +1125,7 @@ function matchRouteBranch<ParamKey extends string = string>(
   const matches: RouteMatch[] = [];
   for (let i = 0; i < routesMeta.length; ++i) {
     const meta = routesMeta[i];
-    // 是否到了最后一个routesMeta
+    // 是否到了最后一个routesMeta，最后一个就是当前branch自己的routeMeta
     const end = i === routesMeta.length - 1;
     // remainingPathname表示剩下还没匹配到的路径，因为下面是用meta.relativePath去正则匹配，所以这里
     // 每遍历一次要去将传入pathname.slice(matchedPathname.length)
@@ -1138,10 +1162,8 @@ function matchRouteBranch<ParamKey extends string = string>(
     if (match.pathnameBase !== "/") {
       matchedPathname = joinPaths([matchedPathname, match.pathnameBase]);
     }
-    // // 上面已经match到了，那么继续从其children中查找，特别注意的是routes的层次与routesMeta.length相对，所以这里加了!
-    // routes = route.children!;
   }
-
+  // matches.length = routesMeta.length
   return matches;
 }
 
@@ -1204,17 +1226,23 @@ function _renderMatches(
  */
 export interface PathPattern {
   /**
+   * 与URL pathname匹配的字符串，可能包含表示动态参数占位符的`:id`片段。也可能以`/*`结尾，
+   * 表示匹配剩下的URL pathname
+   * 
    * A string to match against a URL pathname. May contain `:id`-style segments
    * to indicate placeholders for dynamic parameters. May also end with `/*` to
    * indicate matching the rest of the URL pathname.
    */
   path: string;
   /**
+   * 正则匹配是否忽略大小写
+   * 
    * Should be `true` if the static portions of the `path` should be matched in
    * the same case.
    */
   caseSensitive?: boolean;
-  /**
+  /** 设置为 `true`  表示应该匹配整个URL pathname
+   * 
    * Should be `true` if this pattern should match the entire URL pathname.
    */
   end?: boolean;
@@ -1272,7 +1300,7 @@ export function matchPath<ParamKey extends string = string>(
   if (!match) return null;
 
   const matchedPathname = match[0];
-  // eg: 'auth/'.replace(/(.)\/+$/, "$1") => 'auth // 即(.)，$1表示第一个匹配到的小括号中的值;
+  // eg: 'auth/'.replace(/(.)\/+$/, "$1") => 'auth' // 即(.)，$1表示第一个匹配到的小括号中的值;
   // eg: 'auth/*'.replace(/(.)\/+$/, "$1") => 'auth/*'; // 不匹配，返回原字符串
   let pathnameBase = matchedPathname.replace(/(.)\/+$/, "$1");
   // eg: pattern = {path: 'auth/*', caseSensitive: false, end: true}, pathname = '/auth/login';
@@ -1291,7 +1319,7 @@ export function matchPath<ParamKey extends string = string>(
         // pattern.path = 'basic/*', matchedPathname = '/basic/about', captureGroups =['about'] 
         // matchedPathname.slice(0, matchedPathname.length - splatValue.length) => '/basic/'
         // '/basic/'.replace(/(.)\/+$/, "$1") = '/basic'
-        pathnameBase = '/basic', 
+        // 即pathnameBase = '/basic'
         pathnameBase = matchedPathname
           .slice(0, matchedPathname.length - splatValue.length)
           .replace(/(.)\/+$/, "$1");
@@ -1346,10 +1374,10 @@ function compilePath(
   let regexpSource =
     "^" +
     path
-      .replace(/\/*\*?$/, "") // 去掉'/'或'/*'
+      .replace(/\/*\*?$/, "") // 去掉尾部的'/'、'//' ..., 或'/*'、'//*'， '///*' ..., '*'
       .replace(/^\/*/, "/") //  开头没'/'那么加上；开头有多个'/',那么保留一个；eg: (//auth | auth) => /auth
       .replace(/[\\.*+^$?{}|()[\]]/g, "\\$&") // 对\.*+^$?{}或()[]都给加上\,eg: `()[]` => '\(\)\[\]';`.*+^$?{}` => '\.\*\+\^\$\?\{\}'
-      .replace(/:(\w+)/g, (_: string, paramName: string) => {  // \w ===  [A-Za-z0-9_]
+      .replace(/:(\w+)/g, (_: string, paramName: string) => {  // \w ===  [A-Za-z0-9_], /:(\w+)/g表示处理动态参数
         paramNames.push(paramName);
         /** [^\\/]+ 表示不能是出现/
          * @example
@@ -1365,9 +1393,9 @@ function compilePath(
     // 如果path以"*"结尾，那么paramNames也push
     paramNames.push("*");
     regexpSource +=
-      // 如果path等于*或/*
+      // 如果path等于*或/*， 那么regexpSource最终为regexpSource = '^/(.*)$',(.*)$表示match剩下的
       path === "*" || path === "/*"
-        ? "(.*)$" // Already matched the initial /, just match the rest (.*)$表示match剩下的
+        ? "(.*)$" // Already matched the initial /, just match the rest
         /**
          * (?:x)，匹配 'x' 但是不记住匹配项。这种括号叫作非捕获括号，使得你能够定义与正则表达式运算符一起使用的子表达式。
          * @example
@@ -1400,7 +1428,7 @@ function compilePath(
   } else {
     // path不以"*"结尾
     regexpSource += end
-      ? "\\/*$" // When matching to the end, ignore trailing slashes end的话，忽略斜杠"/"
+      ? "\\/*$" // When matching to the end, ignore trailing slashes 如果是end的话，忽略斜杠"/"
       : // Otherwise, at least match a word boundary. This restricts parent
         // routes to matching only their own words and nothing more, e.g. parent
         // route "/home" should not match "/home2".

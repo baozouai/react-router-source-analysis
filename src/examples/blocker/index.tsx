@@ -1,3 +1,10 @@
+/*
+ * @Description: block和listen
+ * @Author: Moriaty
+ * @Date: 2021-10-28 16:08:03
+ * @Last modified by: Moriaty
+ * @LastEditTime: 2021-10-28 19:34:16
+ */
 import { useContext, useEffect, useState, useRef } from "react";
 import { Routes, Route, Outlet, Link, UNSAFE_NavigationContext } from "react-router-dom";
 
@@ -16,11 +23,13 @@ export default function Blocker() {
         tx.retry()
       }
     })
-
+    // 注意，Blocker卸载后这里还是会调用一次listen
     const  unListen = navigator.listen((update) => {
       debugger
       console.log(update);
     })
+
+    return unListen
   }, [navigator])
   return (
     <div>
