@@ -202,7 +202,7 @@ export function HashRouter({ basename, children, window }: HashRouterProps) {
     />
   );
 }
-
+/** 是否是修饰符事件，包括meta、alt、ctrl、shift */
 function isModifiedEvent(event: React.MouseEvent) {
   return !!(event.metaKey || event.altKey || event.ctrlKey || event.shiftKey);
 }
@@ -230,7 +230,8 @@ export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
     ) {
       // 如果有传onClick，那么调用该onClick
       if (onClick) onClick(event);
-      // 否则如果没有阻止默认行为的话，那么调用internalOnClick
+      // 否则如果事件的默认行为没有被阻止的话，那么调用internalOnClick，
+      // 因为internalOnClick里面会调用event.preventDefault()，使event.defaultPrevented = true
       if (!event.defaultPrevented) {
         internalOnClick(event);
       }
@@ -329,6 +330,9 @@ export const NavLink = React.forwardRef<HTMLAnchorElement, NavLinkProps>(
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
+ * @description 处理路由`<Link>`组件的点击行为， 比较适用于我们要自定义`<Link>`组件，和
+ * `<Link>`有相同的点击行为
+ * 
  * Handles the click behavior for router `<Link>` components. This is useful if
  * you need to create custom `<Link>` compoments with the same click behavior we
  * use in our exported `<Link>`.
@@ -355,15 +359,16 @@ export function useLinkClickHandler<
   return React.useCallback(
     (event: React.MouseEvent<E, MouseEvent>) => {
       if (
-        event.button === 0 && // Ignore everything but left clicks
-        (!target || target === "_self") && // Let browser handle "target=_blank" etc.
-        !isModifiedEvent(event) // Ignore clicks with modifier keys
+        event.button === 0 && // Ignore everything but left clicks 忽略除了左键外的所有内容
+        (!target || target === "_self") && // Let browser handle "target=_blank" etc. 让浏览器处理"target=_blank"等
+        !isModifiedEvent(event) // Ignore clicks with modifier keys 忽略meta、alt、ctrl、shift等修饰符
       ) {
         event.preventDefault();
 
         // If the URL hasn't changed, a regular <a> will do a replace instead of
         // a push, so do the same here.
-        // 如果有传replace为true或当前location和传入path的`pathname + search + hash`相等，那么replace为true
+        // 如果有传replace为true或当前location和传入path的`pathname + search + hash`相等，那么replace为true，
+        // 即URL没有改变的话，<a>会使用replace而不是push
         // 比如当前路径为/basic, 点后点击<Link to='.'>，那上面的useResolvedPath(to)的path还是为{pathname: '/basic', search: '', hash: ''}
         // 那么这里的replace就满足createPath(location) === createPath(path)，即为true了，那就是replace，如果不是跳本路由，那么就为false，那就是push
         const replace =
@@ -376,6 +381,8 @@ export function useLinkClickHandler<
 }
 
 /**
+ * @description 获取和设置searchParams 
+ * 
  * A convenient wrapper for reading and writing search parameters via the
  * URLSearchParams interface.
  */

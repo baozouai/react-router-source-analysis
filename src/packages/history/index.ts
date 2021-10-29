@@ -382,8 +382,8 @@ export function createBrowserHistory(
   /** popstate的回调, 点击浏览器 ← 或 → 会触发 */
   function handlePop() {
     debugger
-    // 第一次进来没有值，然后下面的else判断到有blockers.length就会赋值，之后判断到if (delta)就好调用go(delta)，
-    // 就会再次触发handlePop，然后这里满足条件进入blockers.call(blockedPopTx)
+    // 第一次进来`blockedPopTx`没有值，然后下面的else判断到有blockers.length就会给`blockedPopTx`赋值，之后判断到if (delta)就会调用go(delta)，
+    // 从而再次触发handlePop，然后这里满足条件进入blockers.call(blockedPopTx)
     if (blockedPopTx) {
       // 如果参数有值，那么将参数传给blockers中的handlers
       blockers.call(blockedPopTx);
@@ -409,7 +409,7 @@ export function createBrowserHistory(
               location: nextLocation,
               retry() {
                 // 由于下面的go(delta)阻塞了当前页面的变化，那么retry就可以让页面真正符合浏览器行为的变化了
-                // 这个在blocker回调中可以调用
+                // 这个在blocker回调中可以调用，但下面的go(delta)会触发handlePop，可是go(delta * -1)不会，为何？？？？
                 go(delta * -1);
               }
             };
@@ -678,6 +678,7 @@ export function createHashHistory(
   const globalHistory = window.history;
 
   function getIndexAndLocation(): [number, Location] {
+    // createBrowserHistory是直接获取window.location，而createHashHistory是parsePath(window.location.hash.substr(1))
     const { pathname = '/', search = '', hash = '' } = parsePath(
       window.location.hash.substr(1)
     );
@@ -748,6 +749,8 @@ export function createHashHistory(
     const [, nextLocation] = getIndexAndLocation();
 
     // Ignore extraneous hashchange events.
+    // 忽略无关的hashchange事件
+    // 检测到hashchange，只有前后pathname + search + hash不一样才执行handlePop
     if (createPath(nextLocation) !== createPath(location)) {
       handlePop();
     }

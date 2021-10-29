@@ -98,7 +98,7 @@ function Gallery() {
         {IMAGES.map(image => (
           <Link
             key={image.id}
-            to={`/img/${image.id}`}
+            to={`../img/${image.id}`}
             // This is the trick! Set the `backgroundLocation` in location state
             // so that when we open the modal we still see the current page in
             // the background.
@@ -194,7 +194,7 @@ function NoMatch() {
     <div>
       <h2>Nothing to see here!</h2>
       <p>
-        <Link to="/">Go to the home page</Link>
+        <Link to=".">Go to the home page</Link>
       </p>
     </div>
   );

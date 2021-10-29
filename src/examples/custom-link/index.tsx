@@ -12,7 +12,7 @@ export default function App() {
   return (
     <div>
       <Routes>
-        <Route path="/" element={<Layout />}>
+        <Route element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="about" element={<About />} />
           <Route path="*" element={<NoMatch />} />
@@ -28,7 +28,7 @@ function Layout() {
       <nav>
         <ul>
           <li>
-            <CustomLink to="/customer-link">Home</CustomLink>
+            <CustomLink to=".">Home</CustomLink>
           </li>
           <li>
             <CustomLink to="about">About</CustomLink>
@@ -85,7 +85,7 @@ function NoMatch() {
     <div>
       <h1>Nothing to see here!</h1>
       <p>
-        <Link to="/">Go to the home page</Link>
+        <Link to=".">Go to the home page</Link>
       </p>
     </div>
   );

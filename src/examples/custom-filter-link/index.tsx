@@ -18,7 +18,7 @@ export default function App() {
       <h1>SNKRS</h1>
 
       <Routes>
-        <Route path="/" element={<Layout />}>
+        <Route element={<Layout />}>
           <Route index element={<SneakerGrid />} />
           <Route path="sneakers/:id" element={<SneakerView />} />
           <Route path="*" element={<NoMatch />} />
@@ -35,7 +35,7 @@ function Layout() {
         <h3>Filter by brand</h3>
         <ul>
           <li>
-            <Link to="">All</Link>
+            <Link to=".">All</Link>
           </li>
           {brands.map(brand => (
             <li key={brand}>
