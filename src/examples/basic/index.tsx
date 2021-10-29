@@ -107,7 +107,7 @@ function Dashboard() {
   );
 }
 
-function NoMatch() {
+export function NoMatch() {
   return (
     <div>
       <h2>Nothing to see here!</h2>

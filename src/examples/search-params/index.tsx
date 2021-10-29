@@ -6,7 +6,7 @@ export default function App() {
     <div>
       <h1>React Router - Search Params Example</h1>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route index element={<Home />} />
         <Route path="*" element={<NoMatch />} />
       </Routes>
     </div>

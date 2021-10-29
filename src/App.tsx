@@ -2,15 +2,15 @@ import { Routes, Route, Outlet } from 'react-router'
 import { Link } from 'react-router-dom'
 
 import Auth from './examples/auth'
-import Basic from './examples/basic'
+import Basic, { NoMatch } from './examples/basic'
 import CustomFilterLink from './examples/custom-filter-link'
 import CustomLink from './examples/custom-link'
 import Modal from './examples/modal'
 import SearchParams from './examples/search-params'
-import SSR from './examples/ssr'
 import UseRoutes from './examples/use-routes'
 import Blocker from './examples/blocker'
 import RouteObject from './examples/route-object'
+
 import './App.css'
 const routeConfigs = [
   {
@@ -21,30 +21,26 @@ const routeConfigs = [
     path: 'basic',
     Element: Basic,
   },
-  // {
-  //   path: 'customer-filter-link',
-  //   Element: CustomFilterLink,
-  // },
-  // {
-  //   path: 'customer-link',
-  //   Element: CustomLink,
-  // },
-  // {
-  //   path: 'modal',
-  //   Element: Modal,
-  // },
-  // {
-  //   path: 'search-params',
-  //   Element: SearchParams,
-  // },
-  // {
-  //   path: 'ssr',
-  //   Element: SSR,
-  // },
-  // {
-  //   path: 'use-routes',
-  //   Element: UseRoutes,
-  // },
+  {
+    path: 'customer-filter-link',
+    Element: CustomFilterLink,
+  },
+  {
+    path: 'customer-link',
+    Element: CustomLink,
+  },
+  {
+    path: 'modal',
+    Element: Modal,
+  },
+  {
+    path: 'search-params',
+    Element: SearchParams,
+  },
+  {
+    path: 'use-routes',
+    Element: UseRoutes,
+  },
   {
     path: 'blocker',
     Element: Blocker,
@@ -52,6 +48,10 @@ const routeConfigs = [
   {
     path: 'route-object',
     Element: RouteObject,
+  },
+  {
+    path: '*',
+    Element: NoMatch
   }
 ]
 
@@ -61,11 +61,14 @@ function Layout() {
     <>
       <ul>
         {
-          routeConfigs.map(({ path }) => (
-            <li key={path}>
-              <Link to={`/${path}`}>{path}</Link>
-            </li>
-          ))
+          routeConfigs.map(({ path }) => {
+            if (path === '*') return null
+            return (
+              <li key={path}>
+                <Link to={`/${path}`}>{path}</Link>
+              </li>
+            )
+          })
         }
       </ul>
       <hr />
@@ -78,9 +81,9 @@ function App() {
   return (
     <Routes>
       {/* 注意，这里不是LayoutRoute，因为LayoutRoute只允许element和children,而这里有path */}
-      <Route path='/' element={<Layout />}> 
+      <Route path='/' element={<Layout />}>
         {
-          routeConfigs.map(({ path, Element }) => <Route key={path} path={`${path}/*`} element={<Element />} />)
+          routeConfigs.map(({ path, Element }) => <Route key={path} path={`${path}${path === '*' ? '': '/*'}`} element={<Element />} />)
         }
       </Route>
     </Routes>
@@ -117,7 +120,7 @@ function App() {
   //     <Outlet /> // 这里的<Outlet />就是第一层RouteContext.Provider的outlet，即第二个RouteContext.Provider
   //   </RouteContext.Provider>
   // )
-  
+
   ///////////////////////////////////////////////////////////////////////////////
   // src/examples/basic/index.tsx
   ///////////////////////////////////////////////////////////////////////////////
@@ -212,7 +215,7 @@ function App() {
   ///////////////////////////////////////////////////////////////////////////////
   //   </RouteContext.Provider>
   // )
-  
+
 }
 
 export default App
