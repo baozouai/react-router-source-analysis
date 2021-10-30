@@ -10,6 +10,7 @@ import SearchParams from './examples/search-params'
 import UseRoutes from './examples/use-routes'
 import Blocker from './examples/blocker'
 import RouteObject from './examples/route-object'
+import UseTransition from './examples/use-transition'
 
 import './App.css'
 const routeConfigs = [
@@ -50,6 +51,10 @@ const routeConfigs = [
     Element: RouteObject,
   },
   {
+    path: 'use-transition',
+    Element: UseTransition,
+  },
+  {
     path: '*',
     Element: NoMatch
   }
@@ -59,6 +64,7 @@ function Layout() {
   debugger
   return (
     <>
+     <p>主页面</p>
       <ul>
         {
           routeConfigs.map(({ path }) => {

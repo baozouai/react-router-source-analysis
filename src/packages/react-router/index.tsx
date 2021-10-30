@@ -241,7 +241,7 @@ export interface IndexRouteProps {
 }
 
 /**
- * @description 实质上不渲染，至少用于收集Route的props
+ * @description 实质上不渲染，只是用于收集Route的props
  * 
  * Declares an element that should be rendered at a certain URL path.
  *
