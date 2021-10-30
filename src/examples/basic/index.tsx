@@ -1,6 +1,6 @@
 import { Routes, Route, Outlet, Link } from "react-router-dom";
 
-export default function App() {
+export default function Basic() {
 
   return (
     <div>
@@ -10,7 +10,7 @@ export default function App() {
             parent route paths, and nested route elements render inside
             parent route elements. See the note about <Outlet> below. */}
       <Routes>
-        <Route element={<Layout />}>
+        <Route element={<BasicLayout />}>
           <Route index element={<Home />} />
           <Route path="about" element={<About />}>
             {/* parentPath为'/about', meta.relativePath = '/child'，不是以parentPath开头的，会报错 */}
@@ -30,7 +30,7 @@ export default function App() {
   );
 }
 
-function Layout() {
+function BasicLayout() {
   return (
     <div>
       {/* A "layout route" is a good place to put markup you want to
