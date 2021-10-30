@@ -182,6 +182,7 @@ export type To = string | PartialPath;
  */
 export interface History<S extends State = State> {
   /**
+   * @description 上一个修改当前 location的action，有 `POP`、`PUSH`、`REPLACE`，初始创建为POP
    * The last action that modified the current location. This will always be
    * Action.Pop when a history instance is first created. This value is mutable.
    *
@@ -190,6 +191,7 @@ export interface History<S extends State = State> {
   readonly action: Action;
 
   /**
+   * @description 当前location
    * The current location. This value is mutable.
    *
    * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#history.location
@@ -209,6 +211,8 @@ export interface History<S extends State = State> {
   createHref(to: To): string;
 
   /**
+   * @description push一个新的location到历史堆栈，stack的length会+1
+   * 
    * Pushes a new location onto the history stack, increasing its length by one.
    * If there were any entries in the stack after the current one, they are
    * lost.
@@ -221,6 +225,8 @@ export interface History<S extends State = State> {
   push(to: To, state?: S): void;
 
   /**
+   * @description 将历史堆栈中当前location替换为新的，被替换的将不再存在
+   * 
    * Replaces the current location in the history stack with a new one.  The
    * location that was replaced will no longer be available.
    *
@@ -232,6 +238,8 @@ export interface History<S extends State = State> {
   replace(to: To, state?: S): void;
 
   /**
+   * @description 历史堆栈前进或后退delta(可正负)
+   * 
    * Navigates `n` entries backward/forward in the history stack relative to the
    * current index. For example, a "back" navigation would use go(-1).
    *
@@ -242,6 +250,8 @@ export interface History<S extends State = State> {
   go(delta: number): void;
 
   /**
+   * @description 同go(-1)
+   * 
    * Navigates to the previous entry in the stack. Identical to go(-1).
    *
    * Warning: if the current location is the first location in the stack, this
@@ -252,6 +262,8 @@ export interface History<S extends State = State> {
   back(): void;
 
   /**
+   * @description 同go(1)
+   * 
    * Navigates to the next entry in the stack. Identical to go(1).
    *
    * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#history.forward
@@ -259,6 +271,17 @@ export interface History<S extends State = State> {
   forward(): void;
 
   /**
+   * @description 设置路由切换的监听器，`listener`为函数
+   * 
+   * @example
+   * 
+   * const browserHistory = createBrowserHistory()
+   * browserHistory.push('/user')
+   * const unListen = browserHistory.listen(({action, location}) => {
+   *  // 切换后新的action和location，上面push后，这里的action为PUSH, location为 { pathname: '/user', ... }
+   *  console.log(action, location)
+   * })
+   * 
    * Sets up a listener that will be called whenever the current location
    * changes.
    *
@@ -270,6 +293,8 @@ export interface History<S extends State = State> {
   listen(listener: Listener<S>): () => void;
 
   /**
+   * @description 改变路由时阻塞路由变化
+   * 
    * Prevents the current location from changing and sets up a listener that
    * will be called instead.
    *
