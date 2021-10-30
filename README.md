@@ -18,4 +18,5 @@ react-router(6.0.0-beta.8)、react-router(6.0.0-beta.8)、history(5.0.1)源码�
 - [use-routes](./src/examples/use-routes/index.tsx)
 - [blocker](./src/examples/blocker/index.tsx)
 - [route-object](./src/examples/route-object/index.tsx)
+- [use-transition](./src/examples/use-transition/index.tsx)
 
