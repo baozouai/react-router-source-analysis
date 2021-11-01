@@ -251,7 +251,7 @@ export function Route(
   _props: PathRouteProps | LayoutRouteProps | IndexRouteProps
 ): React.ReactElement | null {
   // Route实际上没有render，只是作为Routes的child
-  // Route必须放Routes里面，主要一进来就会报错
+  // Route必须放Routes里面，不然一进来就会报错
   // 以下是正确的使用方式
   // <Route element={<Layout />}>
   //     <Route index element={<Home />} />
@@ -745,6 +745,7 @@ export function createRoutesFromChildren(
 
     routes.push(route);
   });
+  // console.log(routes);
   return routes;
 }
 
@@ -832,6 +833,7 @@ export function matchRoutes(
   }
   // routes有可能是多层设置，那么flatten下
   const branches = flattenRoutes(routes);
+  console.log(branches);
   /**
    * 通过score或childrenIndex[]排序branch
    * @example

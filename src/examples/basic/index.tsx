@@ -38,9 +38,6 @@ function BasicLayout() {
       <nav>
         <ul>
           <li>
-            <Link to={{}}>to current location ({`<Link to={{}}>`})</Link>
-          </li>
-          <li>
             <Link to="">to current location 1 ({`<Link to="">`})</Link>
           </li>
           <li>
