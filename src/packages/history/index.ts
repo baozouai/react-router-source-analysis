@@ -535,7 +535,7 @@ export function createBrowserHistory(
   function applyTx(nextAction: Action) {
     debugger
     action = nextAction;
-  //  获取当前index和location
+    //  获取当前index和location
     [index, location] = getIndexAndLocation();
     listeners.call({ action, location });
   }

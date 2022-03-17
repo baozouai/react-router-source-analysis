@@ -261,6 +261,7 @@ export interface NavLinkProps extends Omit<LinkProps, "className" | "style"> {
 }
 
 /**
+ * @description <Link> 包装器，可以知道是否active
  * A <Link> wrapper that knows if it's "active" or not.
  */
 export const NavLink = React.forwardRef<HTMLAnchorElement, NavLinkProps>(
@@ -282,10 +283,15 @@ export const NavLink = React.forwardRef<HTMLAnchorElement, NavLinkProps>(
     let locationPathname = location.pathname;
     let toPathname = path.pathname;
     if (!caseSensitive) {
+      // 忽略大小写的话，统一转化为小写
       locationPathname = locationPathname.toLowerCase();
       toPathname = toPathname.toLowerCase();
     }
-
+    /**
+     * 判断是否active
+     * 1. toPathname等于当前locationPathname
+     * 2. 否则判断不是end的情况下，且locationPathname = `${toPathname}/xxx`
+     */
     const isActive =
       locationPathname === toPathname ||
       (!end &&
@@ -398,15 +404,18 @@ export function useSearchParams(defaultInit?: URLSearchParamsInit) {
       `to load polyfills only for users that need them, instead of for every ` +
       `user.`
   );
-
+  // 获取默认的searchParams参数，是一个URLSearchParams实例
   const defaultSearchParamsRef = React.useRef(createSearchParams(defaultInit));
 
   const location = useLocation();
   const searchParams = React.useMemo(() => {
+    // 根据当前location.search获取最新是searchParams
     const searchParams = createSearchParams(location.search);
-
+    
     for (let key of defaultSearchParamsRef.current.keys()) {
       if (!searchParams.has(key)) {
+        // 如果判断到最新的searchParams没有默认参数的key，那么这里要加入
+        // eg: new URLSearchParams([['A', '2'], ['A', 3]]).getAll('A') => ['2', '3']
         defaultSearchParamsRef.current.getAll(key).forEach(value => {
           searchParams.append(key, value);
         });
@@ -422,6 +431,7 @@ export function useSearchParams(defaultInit?: URLSearchParamsInit) {
       nextInit: URLSearchParamsInit,
       navigateOptions?: { replace?: boolean; state?: State }
     ) => {
+      // 根据nextInit得到的searchParams跳转到对应的路径
       navigate("?" + createSearchParams(nextInit), navigateOptions);
     },
     [navigate]
@@ -447,6 +457,10 @@ export type URLSearchParamsInit =
  * values for a given key, but don't want to use an array initializer.
  *
  * @example:
+ * 
+ * - 如果 `init` 为字符串，如 init = 'a=1'
+ * - 如果 `init` 为数组，那么必须为二维数组，如 init = [['a',1], ['b', '2']]
+ * - 如果 `init` 为object，那么格式可以为 { a: 1, b: [1, 2, '3']}
  *
  *   const searchParams = new URLSearchParams([
  *     ['sort', 'name'],

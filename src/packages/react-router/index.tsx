@@ -194,6 +194,7 @@ export interface RouteProps {
   caseSensitive?: boolean;
   children?: React.ReactNode;
   element?: React.ReactElement | null;
+  /** 用于表示是否是 IndexRoute，下面有 IndexRouteProps */
   index?: boolean;
   path?: string;
 }
@@ -234,7 +235,7 @@ export interface IndexRouteProps {
    *    <Route index element={<Home />} />
    *    ...
    * </Route>
-   * 那么会<Layout />中的<Outlet />会render <Home />
+   * 那么<Layout />中的<Outlet />会render <Home />
    *  */
   index: true;
   path?: string;
@@ -251,12 +252,13 @@ export function Route(
   _props: PathRouteProps | LayoutRouteProps | IndexRouteProps
 ): React.ReactElement | null {
   // Route实际上没有render，只是作为Routes的child
-  // Route必须放Routes里面，主要一进来就会报错
+  // Route必须放Routes里面，不然一进来就会报错
   // 以下是正确的使用方式
-  // <Route element={<Layout />}>
+  // <Routes>
+  //  <Route element={<Layout />}>
   //     <Route index element={<Home />} />
   //     <Route path="about" element={<About />} />
-  //   </Route>
+  //  </Route>
   // </Routes>
   invariant(
     false,
@@ -403,6 +405,7 @@ export function useHref(to: To): string {
 
   if (basename !== "/") {
     const toPathname = getToPathname(to);
+    // 是否以/结尾，Slash 意思是斜杠
     const endsWithSlash = toPathname != null && toPathname.endsWith("/");
     path.pathname =
       path.pathname === "/"
@@ -745,6 +748,7 @@ export function createRoutesFromChildren(
 
     routes.push(route);
   });
+  // console.log(routes);
   return routes;
 }
 
@@ -830,7 +834,7 @@ export function matchRoutes(
   if (pathname == null) {
     return null;
   }
-  // routes有可能是多层设置，那么flatten下
+  // routes有可能是多层设置，那么flatten下
   const branches = flattenRoutes(routes);
   /**
    * 通过score或childrenIndex[]排序branch
@@ -847,7 +851,7 @@ export function matchRoutes(
    *   path: '/login', score: 13, routesMeta: [
    *     {relativePath: "",caseSensitive: false,childrenIndex: 0},
    *     {relativePath: "login",caseSensitive: false,childrenIndex: 1}
-   * ]
+   *  ]
    * },
    *  {
    *   path: '/protected', score: 13, routesMeta: [
@@ -1163,7 +1167,7 @@ function matchRouteBranch<ParamKey extends string = string>(
       matchedPathname = joinPaths([matchedPathname, match.pathnameBase]);
     }
   }
-  // matches.length = routesMeta.length
+  // matches.length === routesMeta.length
   return matches;
 }
 
@@ -1193,7 +1197,7 @@ function _renderMatches(
    *       outlet: (
    *       <RouteContext.Provider
    *         value={{
-   *           matches: parentMatches.concat(matches.slice(0:2)),
+   *           matches: parentMatches.concat(matches.slice(0, 2)),
    *           outlet: null // 第一次outlet为null,
    *         }}
    *       >
@@ -1351,7 +1355,7 @@ export function matchPath<ParamKey extends string = string>(
  * @example
  * 
  * compilePath('/') => matcher = /^\/\/*$/i
- * compilePath('/', true, false) => matcher = /^\/(?:\b|$)/i
+ * compilePath('/', true, false) => matcher = /^\/(?:\b|$)/
  * compilePath('/auth') => matcher = /^\/auth\/*$/i
  * compilePath('/auth/public', true) => matcher = /^\/auth\/public\/*$/
  * compilePath('auth/*', true) => matcher = /^\/auth(?:\/(.+)|\/*)$/
@@ -1361,6 +1365,7 @@ function compilePath(
   caseSensitive = false,
   end = true
 ): [RegExp, string[]] {
+  // 如果尾部是*，那么需要以"/*"结尾
   warning(
     path === "*" || !path.endsWith("*") || path.endsWith("/*"),
     `Route path "${path}" will be treated as if it were ` +
@@ -1384,7 +1389,7 @@ function compilePath(
          * '/auth/:id/www/:name/ee' => '/auth/([^\/]+)/www/([^\/]+)/ee'
          * const reg = new RegExp('/auth/([^\/]+)/www/([^\/]+)/ee', 'i')
          * reg.test('/auth/33/www/a1_A/ee') // params = ['33', 'a1_A'], true
-         * reg.test('/auth/33/www/a1_A//ee')) // params = ['33', 'a1_A/'], false
+         * reg.test('/auth/33/www/a1_A//ee')) // false，因为a1_A/
          */
         return "([^\\/]+)";
       });
